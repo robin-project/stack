@@ -1,0 +1,31 @@
+<html>
+<head>
+<title>Resource apply request has been rejected</title>
+</head>
+<body>
+	Dear  $headers.req.submitUser.userBusinessInfo3,<br/>
+	This message is to inform you that one request you submitted has been rejected.<br/>
+	<br/>
+	Request Data:<br/>
+	Submit user : $headers.req.submitUser <br/>
+	Request date : $headers.req.dateCreated <br/>
+	Request details : $headers.resourceType <br/>
+	Request quantity : $headers.req.requestDetail.quantityNeed <br/>
+	Request purpose :  $headers.req.requestDetail.purpose <br/>
+	Request comment :  $headers.req.requestDetail.comment <br/>
+	
+	<br/>
+	<br/>
+	To access the system:<br/>
+	Step 1: <br/>
+	Access Stack System: <br/>
+	<a href="http://cdc-operation-aries.asiapacific.hpqcorp.net/stack/">http://cdc-operation-aries.asiapacific.hpqcorp.net/stack</a><br/>
+	Step 2: <br/>
+	Logon to approve/reject the request:<br/>
+	<br/>
+	Thank you for your support!<br/>
+	Stack team<br/><br/>
+	
+	This is an automatically generated e-mail. Please do not reply to this message.<br/>
+</body>
+</html>
