@@ -5,3 +5,6 @@ target
 #file
 .classpath
 .project
+
+#specific files
+grails-app/conf/Bootstrap.groovy
