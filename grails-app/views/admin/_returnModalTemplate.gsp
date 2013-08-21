@@ -4,10 +4,12 @@
 			<button type="button" class="close pull-right" data-dismiss="modal" aria-hidden="true">
 				<i class='icon-off'></i>
 			</button>
-			<h3><g:message code="admin.modal.return.label" /></h3>
+			<h3><g:message code="admin.modal.action.title" args="['Return']"/></h3>
 		</div>
 		<div class="modal-body">
-		<div id="returned-resource" class="content span12" role="main"></div>
+		<div id="returned-resource" class="content span12" role="main">
+			<p class="text-error"><strong><g:message code="admin.modal.noselect.resource"/></strong></p>
+		</div>
 	</div>
 	<div class="modal-footer">
 		<button onclick="saveActionResource('returnedResourceId')" class="btn btn-primary pull-right span3">${message(code: 'admin.ok.btn.label', default: 'Ok')}</button>

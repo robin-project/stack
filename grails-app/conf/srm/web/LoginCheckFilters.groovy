@@ -6,7 +6,8 @@ class LoginCheckFilters {
         all(controller:'*', action:'*') {
             before = {
     			if (!session.user && (controllerName.equals('admin')||controllerName.equals('common'))) {
-                    redirect(controller:"signup")
+                    redirect(uri:"/")
+                    return false
 				}
                 log.debug controllerName + "before"
             }

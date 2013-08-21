@@ -4,12 +4,14 @@
 <!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
 <!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
 <!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
-<!--[if (gt IE 9)|!(IE)]><!-->
+<!--[if (gt IE 9)|!(IE)]>
+<!DOCTYPE html>
+<!-->
 <html lang="en" class="no-js">
 <!--<![endif]-->
 <head>
+<meta http-equiv="X-UA-Compatible" content="chrome=1,IE=edge">
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 <title><g:message code="srm.application.name.label" /></title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <r:require modules="bootstrap" />
@@ -28,8 +30,13 @@
 </head>
 <body>
 	<browser:choice>
-		<browser:isMsie versionLower="9">
-			<DIV class="alert">
+		<browser:isMsie versionGreater="8">			
+		</browser:isMsie>
+		<browser:isSafari></browser:isSafari>
+		<browser:isChrome></browser:isChrome>
+		<browser:isFirefox></browser:isFirefox>
+		<browser:otherwise>
+			<DIV class="alert alert-error">
 				<div class="container row-fluid">
 
 					<div class="media offset2 span8">
@@ -42,10 +49,7 @@
 
 				</div>
 			</DIV>
-		</browser:isMsie>
-		<browser:isSafari></browser:isSafari>
-		<browser:isChrome></browser:isChrome>
-		<browser:isFirefox></browser:isFirefox>
+		</browser:otherwise>
 		<%--			<browser:isOpera></browser:isOpera>--%>
 		<%--			<browser:isiPhone></browser:isiPhone>--%>
 		<%--			<browser:isiPad></browser:isiPad>--%>

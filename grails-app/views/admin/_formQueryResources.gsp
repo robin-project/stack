@@ -6,15 +6,15 @@
 	<div class="row-fluid span5">
 		<div class="row-fluid">
 			<label class="span3"><g:message code="admin.query.type.label"/></label>
-			<g:select id="type_select" name="type" noSelection="['':'']" from="${ResourceType.findAll().resourceTypeName.unique()}" value="${params.type }"/>
+			<g:select id="type_select" name="type" noSelection="['':'']" from="${ResourceType.list([sort:'resourceTypeName']).resourceTypeName.unique()}" value="${params.type }"/>
 		</div>
 		<div class="row-fluid">
 			<label class="span3"><g:message code="admin.query.supplier.label"/></label>
-			<g:select id="supplier_select" value="${params.supplier }" name="supplier" noSelection="['':'']" from="${ResourceType.findAll().supplier.unique()}"/>
+			<g:select id="supplier_select" value="${params.supplier }" name="supplier" noSelection="['':'']" from="${ResourceType.list([sort:'supplier']).supplier.unique()}"/>
 		</div>
 		<div class="row-fluid">
 			<label class="span3"><g:message code="admin.query.model.label"/></label>
-			<g:select id="model_select" name="model" value="${params.model }" noSelection="['':'']" from="${ResourceType.findAll().model.unique()}"/>
+			<g:select id="model_select" name="model" value="${params.model }" noSelection="['':'']" from="${ResourceType.list([sort:'model']).model.unique()}"/>
 		</div>
 		<div class="row-fluid">
 			<label class="span3"><g:message code="admin.query.product.label"/></label>
@@ -28,10 +28,11 @@
 	</div>
 	
 	<!-- rights -->
-	<div class="row-fluid span6">
+	<div class="row-fluid span5">
 		<div class="row-fluid">
 			<label class="span3"><g:message code="admin.query.owner.label"/></label>
-			<g:render contextPath="../query" template="formQueryUsers" />
+			<g:render contextPath="../query" template="formQueryUsers"  model="['formId':"queryResourceUserLookup"]"/>
+			<input type="hidden" name="queryResourceEid" id="queryResourceUserId" value="${params.queryResourceEid}"/>
 		</div>
 		<div class="row-fluid">
 			<label class="span3"><g:message code="admin.query.purpose.label"/></label>
@@ -63,13 +64,20 @@
 		</div>
 		<div class="row-fluid">
 			<label class="span3"><g:message code="admin.query.status.label"/></label>
-			<g:checkBox name="retiredCode" value="${params.retiredCode }"/>&nbsp;<g:message code="admin.query.status.val4"/>&nbsp;&nbsp;
-			<g:checkBox name="normalCode" value="${params.normalCode}"/>&nbsp;<g:message code="admin.query.status.val1"/>&nbsp;&nbsp;
-			<g:checkBox name="lostCode" value="${params.lostCode }"/>&nbsp;<g:message code="admin.query.status.val5"/>&nbsp;&nbsp;
-			<g:checkBox name="allocatedCode" value="${params.allocatedCode }"/>&nbsp;<g:message code="admin.query.status.val2"/>&nbsp;&nbsp;
-			<g:checkBox name="brokenCode" value="${params.brokenCode}"/>&nbsp;<g:message code="admin.query.status.val3"/>&nbsp;&nbsp;
-			<g:checkBox name="transferredCode" value="${params.transferredCode }"/>&nbsp;<g:message code="admin.query.status.val7"/>&nbsp;&nbsp;
-			<g:checkBox name="returnedItioCode" value="${params.returnedItioCode }"/>&nbsp;<g:message code="admin.query.status.val6"/>
+			<div>
+				<g:checkBox name="retiredCode" value="${params.retiredCode }"/>&nbsp;<g:message code="label.resource.status.retired"/>&nbsp;&nbsp;
+				<g:checkBox name="normalCode" value="${params.normalCode}"/>&nbsp;<g:message code="label.resource.status.normal"/>&nbsp;&nbsp;&nbsp;&nbsp;
+				<g:checkBox name="transferredCode" value="${params.transferredCode }"/>&nbsp;<g:message code="label.resource.status.transferred"/>
+			</div>
+			<div>
+				<g:checkBox name="brokenCode" value="${params.brokenCode}"/>&nbsp;<g:message code="label.resource.status.broken"/>&nbsp;&nbsp;
+				<g:checkBox name="allocatedCode" value="${params.allocatedCode }"/>&nbsp;<g:message code="label.resource.status.allocated"/>&nbsp;
+				<g:checkBox name="lostCode" value="${params.lostCode }"/>&nbsp;<g:message code="label.resource.status.lost"/>
+			</div>
+			<div class="text-center">
+				<g:checkBox name="returnedItioCode" value="${params.returnedItioCode }"/>&nbsp;<g:message code="label.resource.status.returned"/>
+				<g:checkBox name="inQuestionCode" value="${params.inQuestionCode }"/>&nbsp;<g:message code="label.resource.status.in_question"/>
+			</div>
 		</div>
 	</div>
 
@@ -88,8 +96,44 @@
 			$("#arriveDateInputId").attr('value',date);
 		}
 	}
-	var dataSet =  ['${flash.userEmailSet}'];
-	var array = new Array();
+
+	function callLoadSupplier(isInit){
+		$.ajax({
+			url:'${request.contextPath}/query/loadSuppliers',
+			data: "typeId=" + $("#type_select").val(),
+			cache: false,
+			complete: function(html) {
+				$("#supplier_select").html(html.responseText);	//refresh supplier
+				if (isInit){
+					$("#supplier_select").attr("value", "${params.supplier}");
+				}
+				callLoadModel(isInit);	//load model
+			}
+ 		});
+	}
+	
+	function callLoadModel(isInit){
+		$.ajax({
+			url:'${request.contextPath}/query/loadModel',
+			data: "supId=" + $("#supplier_select").val() + "&typeId="+$("#type_select").val(),
+			cache: false,
+			complete: function(html) {
+				$("#model_select").html(html.responseText);
+				if (isInit){
+					$("#model_select").attr("value", "${params.model}");
+				}
+			}
+ 		});
+	}
+
+	function initialTypeSupplierModel(){
+		if ("${params.type}"!=""){
+			callLoadSupplier(true);
+		}else if ("${params.supplier}"!=""){
+			callLoadModel(true);
+		}
+	}
+
 	$(document).ready(function(){	
 		enableDatepicker();		
 		initArriveDate();
@@ -109,52 +153,22 @@
 				$("#typeBtnId").html("On");
 			}
 		});
-		//initialize owner info
-		if ("${params.userBusinessInfo2}"!=""){
-			$("#queryContent").attr("value", "${params.userBusinessInfo2}");
-			$("#userBusinessInfo2").attr("value", "${params.userBusinessInfo2}");
-		}
 
-		//remove owner email
-		$("#queryContent").change(function(){
-			var value = $("#queryContent").val();
-			if (value==null || value==""){
-				$("#userBusinessInfo2").attr("value", null);
-			}
-		})
-
+		//initalize the exists type-supplier-model cascade relationship
+		initialTypeSupplierModel();
+		
      	//cascade select type-supplier-model
-     	$("#type_select").change(function() {
-     		$.ajax({
-				url:'${request.contextPath}/query/loadSuppliers',
-				data: "id=" + this.value,
-				cache: false,
-				success: function(html) {
-					$("#supplier_select").html(html);
-				}
-     		});
-        });	 
-
-     	$("#model_select").mousedown(function(){
-     		$.ajax({
-				url:'${request.contextPath}/query/loadModel',
-				data: "id=" + $("#supplier_select").val(),
-				cache: false,
-				success: function(html) {
-					$("#model_select").html(html);
-				}
-     		});
-         });
-     	$("#supplier_select").change(function() {
-     		$.ajax({
-				url:'${request.contextPath}/query/loadModel',
-				data: "id=" + this.value,
-				cache: false,
-				success: function(html) {
-					$("#model_select").html(html);
-				}
-     		});
+		$("#type_select").change(function() {
+			callLoadSupplier(false);
         });
+     	$("#supplier_select").change(function() {
+     		callLoadModel(false);
+        });
+
+		//set the query resource user EID value
+     	$("#queryResourceUserLookup-userBusinessInfo1").on("change",function(){
+			$("#queryResourceUserId").attr("value", $(this).val());
+		});
         
 	})
 </script>			

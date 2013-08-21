@@ -5,6 +5,8 @@ grails.project.test.reports.dir = "target/test-reports"
 grails.project.target.level = 1.6
 grails.project.source.level = 1.6
 grails.project.war.file = "target/${appName}.war"
+grails.enable.native2ascii = false
+
 //grails.project.war.file = "target/${appName}-${appVersion}.war"
 
 // uncomment (and adjust settings) to fork the JVM to isolate classpaths
@@ -53,7 +55,7 @@ grails.project.dependency.resolution = {
         runtime ":jquery:1.8.3"
 		compile ":jquery-ui:1.8.24"
 //		compile ":calendar:1.2.1"
-        runtime ":resources:1.1.6"
+        runtime ":resources:1.2.RC2"
         compile ":lesscss-resources:1.3.3"
 		compile ":avatar:0.6.3"
 		compile ":browser-detection:0.4.3"

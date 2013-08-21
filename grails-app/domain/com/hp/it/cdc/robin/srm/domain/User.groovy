@@ -13,6 +13,8 @@ class User implements Serializable{
 	String userBusinessInfo1 //EmployeeID
 	String userBusinessInfo2 //Email
 	String userBusinessInfo3 //firstName LastName from LDAP
+	String userBusinessInfo4 //EmployeeType
+	String userBusinessInfo5 //location code
 	User manager
     Date lastValidateTs = new Date()
 	UserStatusEnum status
@@ -28,6 +30,8 @@ class User implements Serializable{
 		userBusinessInfo2 email:true, unique:true
 		userApprovalPreferences nullable:true
 		password nullable:true, minLenght: 6, matches: /^[\d\p{L}]*$/
+		userBusinessInfo4 nullable:true
+		userBusinessInfo5 nullable:true
     }
 	
 	static mapping = {

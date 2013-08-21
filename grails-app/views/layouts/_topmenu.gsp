@@ -8,7 +8,8 @@
 			</a> <a class="brand" href="#"><g:message code="srm.application.name.label" /></a>
 			<div class="nav-collapse collapse navbar-responsive-collapse">
 				<ul class="nav pull-right">
-
+				<li><a href="${com.hp.it.cdc.robin.srm.domain.SystemProperty.first().userGuideUrl}" target="_blank"><span class="label"><i class="icon-question-sign icon-white"></i>&nbsp;
+		<g:message code="user.manual"/></span></a></li>
 					<li class="divider-vertical"></li>
 					<li><a href="#" class="dropdown-toggle"
 						data-toggle="dropdown"> <g:if test="${session["user"]}">

@@ -12,6 +12,7 @@
 		</div>
 		<div class="modal-body">
 			<div class="content span12" role="main">
+				<p><g:message code="user.input.label"/></p>
 				<fieldset class="form">
 					<!-- Purpose -->
 					<div class="row-fluid">
@@ -24,7 +25,7 @@
 								<div id="rep_transfer_user"></div> -->
 								<div class="input-prepend">
   									<span class="add-on">To:</span>
-									<g:render contextPath="../query" template="formQueryUsers" />
+									<g:render contextPath="../query" template="formQueryUsers"  model="['formId':"user_lookup"]"/>
 								</div>
 								<div id="rep_transfer_user"></div>
 							</div>
@@ -41,10 +42,11 @@
 					<div class="row-fluid">
 						<div class="span12">
 							<g:textArea name="comment" class="validate[required, minSize[5]]"
-								placeholder="${message(code: 'hint.transferResource.comments')}"
-								style="width:98%"/>
+								placeholder="${message(code: 'hint.transferResource.comments')}"/>
 						</div>
 					</div>
+
+					
 				</fieldset>
 			</div>
 		</div>
@@ -94,6 +96,7 @@
 							$('#transferResources').modal('hide');
 			            	$('#SRM-BODY-CONTENT').html(data);
 			            	$('#TAB-20001 > a').click();
+			            	refreshNumber();
 		                }  
 			     });
 				}
@@ -105,28 +108,6 @@
         validateTransferForm();
     });
 
-    <!--
-	$("#people_find").select2({
-			placeholder: "Search for user",
-			minimumInputLength: 2,
-			ajax: {
-		        url: "http://localhost:8080/srm-web/common/lookupUser",
-		        dataType: 'json',
-		        quietMillis: 1000,
-		        data: function (term, page) {
-		            return {email:term}
-		        },
-		        results: function (data, page) {
-		            console.log(data)
-		            return {results: data.users}
-		        },
-    		},
-    		formatResult: userFormatResult,
-    		formatSelection: userFormatSelection,
-    		dropdownCssClass: "bigdrop",
-    		escapeMarkup: function (m) { return m; }
-    })
-    -->
 
 </script>
 

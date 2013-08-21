@@ -87,7 +87,7 @@ margin: 0px;
 		                    </g:eachError>
 		                </ul>
 		             </g:hasErrors>
-					<g:form id="reactiveForm" url="[controller:'reactivate', action:'reactive']">
+					<g:form id="reactiveForm" url="[action:'reactive']">
 						<div class="input-control text ${hasErrors(bean: userInstance, field: 'userBusinessInfo2', 'error')} ">
 							<g:textField placeholder="Your HP Email" name="userBusinessInfo2" value="${userInstance?.userBusinessInfo2}" />
 							<p/><g:message code="format.emailMsg"/>

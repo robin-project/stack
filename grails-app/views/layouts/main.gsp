@@ -3,16 +3,18 @@
 <!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
 <!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
 <!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
-<!--[if (gt IE 9)|!(IE)]><!-->
+<!--[if (gt IE 9)|!(IE)]>
+<!DOCTYPE html>
+<!-->
 <html lang="en" class="no-js">
 <!--<![endif]-->
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-Type" content="charset=UTF-8">
 <title><g:message code="srm.application.name.label" /></title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <g:setProvider library="jquery" />
-<r:require modules="bootstrap" />
+<r:require modules="bootstrap,select2,scrollto" />
 <!-- r:require module="jquery-ui" /-->
 <link rel="shortcut icon"
 	href="${resource(dir: 'images', file: 'favicon.ico')}"
@@ -35,6 +37,8 @@
 	type="text/css">
 	
 <link rel="stylesheet" href="${resource(dir: 'css', file: 'validationEngine.jquery.css')}" type="text/css"/>
+<link rel="stylesheet" href="${resource(dir: 'css/select2', file: 'select2.css')}" type="text/css">
+
 
 <script type="text/javascript" >
 	function toggleToTab(id){
@@ -61,16 +65,47 @@
         	pickerPosition: "bottom-left",
     	});
 	}
+
+	function refreshApprovlesCount(){
+		$.ajax({
+	        dataType: "json",
+	        url: "${request.contextPath}/query/countApprovals",
+	        success: function(data){
+	        	if(data!=0){
+	        		$("#tab_alert_approval_number").css("display", "inline");	
+	        		$("#tab_alert_approval_number").html(data);	
+	        	}else{
+	        		$("#tab_alert_approval_number").css("display", "none");	
+	        	}
+	        	
+	        }
+    	});
+	}
+
+	function refreshDashBoard(){
+		$.ajax({
+	        dataType: "html",
+	        url: "${request.contextPath}/query/refreshDashboard",
+	        success: function(html){
+	        	$("#dashboard-numbers").replaceWith(html);
+	        }
+    	});
+	}
+	function refreshNumber(){
+		refreshDashBoard();
+		refreshApprovlesCount();
+	}
 </script>
 
 <r:layoutResources />
 <g:layoutHead />
-</head>
 <style type="text/css">
 .tab-content {
 	overflow: visible;
 }	
 </style>
+</head>
+
 <body>
 	<g:render contextPath="/layouts" template="topmenu" />
 	

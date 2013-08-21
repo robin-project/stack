@@ -5,11 +5,13 @@
 				<i class='icon-off'></i>
 			</button>
 			<h3>
-				<g:message code="admin.modal.broken.label" />
+				<g:message code="admin.modal.action.title" args="['Broken']"/>
 			</h3>
 		</div>
 		<div class="modal-body">
-		<div id="broken-resource" class="content span12" role="main"></div>
+		<div id="broken-resource" class="content span12" role="main">
+			<p class="text-error"><strong><g:message code="admin.modal.noselect.resource"/></strong></p>
+		</div>
 	</div>
 	<div class="modal-footer">
 		<button onclick="saveActionResource('brokenResourceId')" class="btn btn-primary pull-right span3">${message(code: 'admin.ok.btn.label', default: 'Ok')}</button>

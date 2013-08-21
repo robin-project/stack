@@ -10,8 +10,9 @@ class ResourceApplyDetail extends RequestDetail{
 	
 	Integer quantityNeed
 	Integer quantityAllocate = Integer.valueOf(0)
+	BigDecimal resourceTypeUnitPriceInRmb
 
     static constraints = {
-		//project nullable:true 
+		resourceTypeUnitPriceInRmb nullable:true 
     }
 }

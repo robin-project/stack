@@ -13,15 +13,32 @@
 					${flash.error}
 				</div>
 			</g:if>
+
+
+			<div class="navbar">
+              <div class="navbar-inner">
+                <ul class="nav">
+                  <li><a href="#allocateWOrequest" data-toggle="modal"> 
+						<i class="icon-exclamation-sign"></i> &nbsp; 
+						<g:message code="allocateWOrequest.button.label" />
+					</a></li><li class="divider-vertical"></li>
+                  <li><a id="bookTime" href=""data-toggle="modal"> 
+						<i class="icon-envelope"></i> &nbsp; 
+						<g:message code="booktime.button.label" />
+					</a></li><li class="divider-vertical"></li>
+                  <li class="pull-right"><g:render contextPath="../query" template="formQueryUsers"  model="['formId':"allocateUserFilter"]"/></li>
+                </ul>
+              </div>
+            </div>
+			
 			<input type="hidden" id="offsetInput" value="1">
 			<table class="table table-hover table-striped">
 				<thead>
 					<tr>
-						<th><a href="#allocateWOrequest" class="btn btn-primary"
-							data-toggle="modal"> <i
-								class="icon-exclamation-sign icon-white"></i> &nbsp; <g:message
-									code="allocateWOrequest.button.label" />
-						</a></th>
+						<th></th>
+						<th>
+							${message(code: 'action.label', default: 'Action')}
+						</th>
 
 						<th>
 							${message(code: 'requestid.label', default: 'Request ID')}
@@ -40,91 +57,34 @@
 							${message(code: 'request.by.label', default: 'Request by')}
 						</th>
 						<th>
-							${message(code: 'request.usage.label', default: 'Usage')}
+							${message(code: 'request.manager.label', default: 'Manager')}
+						</th>
+						<th>
+							<a href="#aliasConfigForAllocate" data-toggle="modal" class="btn btn-mini"><i class="icon-tasks"></i></a>${message(code: 'request.location.label', default: 'Location')}
+							
 						</th>
 					</tr>
 				</thead>
 				<tbody id="allocateList">
-					<g:each in="${requestInstanceList}" status="i"
-						var="requestInstance">
-						<tr class="${(i % 2) == 0 ? 'even' : 'odd'}">
-							<td><div class="btn-group">
-									<button class="btn dropdown-toggle" data-toggle="dropdown">
-										<i class="icon-tasks"></i> &nbsp;
-										<g:message code="action.button.label" />
-										&nbsp;<span class="caret"></span>
-									</button>
-									<ul class="dropdown-menu">
-										<li><a href="#allocateForRequest-${requestInstance.id}"
-											role="button" data-toggle="modal"> <i
-												class="icon-ok-sign"></i>&nbsp;<g:message
-													code="requestallocate.button.label" />&nbsp;
-										</a></li>
-										<li><a href="#viewForRequest-${requestInstance.id}"
-											role="button" data-toggle="modal"> <i
-												class="icon-eye-open"></i>&nbsp;<g:message
-													code="requestview.button.label" />&nbsp;
-										</a></li>
-										<li><a href="#" role="button" data-toggle="modal"
-											onclick="closeRequest(${requestInstance.id});">
-												${message(code:"requestclose.button.label")}
-										</a>
-											
-									</ul>
-									
-								</div>
-								<form id="closeRequest-${requestInstance.id}"
-												style="display: none">
-												<g:hiddenField name="requestId"
-													value="${requestInstance.id}" />
-
-												<g:submitToRemote
-													id="closeRequestSubmit-${requestInstance.id}"
-													class="hide"
-													url="[action:'closeRequest']" update="SRM-BODY-CONTENT"
-													value="" />
-
-											</form>
-								</td>
-							<td>
-								req-apply-${requestInstance.id}
-							</td>
-
-				
-							<td>
-								${requestInstance.requestDetail.resourceType.resourceTypeName}-
-								${requestInstance.requestDetail.resourceType.supplier}-
-								${requestInstance.requestDetail.resourceType.model}
-							</td>
-							<td>
-								<g:message code='${requestInstance.status.labelCode}.render'/>
-										
-							
-								<label class="badge">${requestInstance.requestDetail.quantityAllocate} /${requestInstance.requestDetail.quantityNeed}</label>
-							</td>
-							<td>
-								${requestInstance.submitUser.userBusinessInfo3}
-							</td>
-							<td>
-								${requestInstance.requestDetail.purpose}
-							</td>
-						</tr>
-					</g:each>
-
+					<g:render contextPath="/query" template="allocateList"/>
 				</tbody>
 			</table>
 
 		</div>
 	</div>
+</div>
 
-
-		<div class="pagination ajax_paginate">
+		<div id="loadMore" class="pagination ajax_paginate">
 			<a href="#" onclick="loadMoreAllocate()"><g:message code="default.paginate.more"/></a>
 		</div>
+		<div id="end">
 </div>
 
 <g:render template="formAllocateWOrequest"/>
 
+<g:render template="formAliasConfigForAllocate"
+	collection="${locationList}" />
+	
 <div id="allocateModals">
 <g:render template="formAllocateResource"
 	collection="${requestInstanceList}" />
@@ -140,17 +100,23 @@
 function closeRequest(id){
 	$('#closeRequestSubmit-'+id).click();
 }
+
 function loadMoreAllocate(){
     /* add code to fetch new content and add it to the DOM */
     var value = $("#offsetInput").attr("value");
-	
+
     $.ajax({
         dataType: "html",
         url: "${request.contextPath}/query/allocateList?offset="+value,
         async: false,
         success: function(html){
             if(html){
-                $("#allocateList").append(html);
+                if (html.length>5){
+                	$("#allocateList").append(html);
+                	$("body,html").scrollTo("#end");
+                }else{
+                	$('#loadMore').hide();
+                }
             }
             $("#offsetInput").attr("value",parseInt(value)+1);
         }
@@ -178,6 +144,67 @@ function loadMoreAllocate(){
         }
     });
 }
+
+	$(document).ready(function(){		
+			if($("#allocateList > tr").size()<10){
+				$('#loadMore').hide();
+			}
+			$("#allocateUserFilter").css("margin-top","5px").css("margin-bottom","5px");
+
+			$('#allocateUserFilter-userBusinessInfo1').on("change",function(){
+				    $.ajax({
+        				dataType: "html",
+        				url: "${request.contextPath}/query/allocateList?userBusinessInfo1="+$(this).val(),
+        				async: false,
+        				success: function(html){
+            				if(html){
+                				$("#allocateList").html(html)
+                				$('#loadMore').hide();
+            				}
+       					 }
+    				});//end ajax
+
+    				$.ajax({
+        				dataType: "html",
+        				url: "renderAllocateModels?userBusinessInfo1="+$(this).val(),
+        				async: false,
+        				success: function(html){
+            				if(html){
+                				$("#allocateModals").html(html);
+                			}
+        			        }
+    				});//end ajax
+
+    				$.ajax({
+        				dataType: "html",
+        				url: "renderViewModels?userBusinessInfo1="+$(this).val(),
+        				async: false,
+        				success: function(html){
+            				if(html){
+                				$("#viewModals").html(html);}
+    						}
+    				});//end ajax
+			})//end on change
+
+            $("#bookTime").click(function(){
+                var subject = "Get your approved IT resources"
+                //var body = " \n  Request ID \t  Resource  \t  Purpose  \t Quantity \t Submitter "
+                var body = " \n "
+                var greeting = "Hi all, \nThe IT resources you applied below are approved. Plz come to my cube (B7, 1st floor, Building C, VIA) to get it 2:00pm---5:30pm today. Thanks! \n"
+                var signature = "\n Best Regards! \n "
+                var to = ""
+                $("#allocateList tr").
+                    map(function(){
+                        if($("td:first-child input",this)[0].checked){
+                            //console.dir($("td",this)[3].innerText)
+                            body += $("td",this)[2].innerText.trim() + " \t " + $("td",this)[3].innerText.trim().replace("\n","\t") + " \t " +  $($("td",this)[4]).attr('data-quantity') +  " \t " + $("td",this)[5].innerText.trim() + " \n "
+                            to += $("td",this)[5].title + ";"
+                        }
+                    })
+                var mailto = "mailto:"+ to +"?subject="+ subject +"&body=" + encodeURIComponent(greeting+body+signature)
+                $(this).attr('href',mailto)
+            })
+	});//end document ready
 </script>
 
 

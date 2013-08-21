@@ -7,7 +7,8 @@ enum ResourceStatusEnum {
 	BROKEN("label.resource.status.broken", "Broken"),  
 	LOST("label.resource.status.lost", "Lost"), 
 	RETURNED_ITIO("label.resource.status.returned", "Returned-ITIO"),
-	TRANSFERRED("label.resource.status.transferred", "Transferred")
+	TRANSFERRED("label.resource.status.transferred", "Transferred"),
+	IN_QUESTION("label.resource.status.in_question","In-Question")
 
 
     ResourceStatusEnum(String labelCode, String description){

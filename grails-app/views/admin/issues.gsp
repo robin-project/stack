@@ -21,9 +21,10 @@
 			</g:each>
 
 		</div>
-		<div class="pagination ajax_paginate">
+		<div id="loadMoreIssue" class="pagination ajax_paginate">
 			<a href="#" onclick="loadMoreIssue()"><g:message code="default.paginate.more"/></a>
 		</div>
+		<div id="end">
 	</div>
 </div>
 
@@ -38,10 +39,23 @@ function loadMoreIssue(){
         url: "issueList?offset="+value,
         success: function(html){
             if(html){
-                $("#issueDash").append(html);
+                
+                if (html.length>5){
+                	$("#issueDash").append(html);
+
+                }else{
+                	$('#loadMoreIssue').hide();
+                }
             }
+            $("body,html").scrollTo("#end");
             $("#offsetInput").attr("value",parseInt(value)+1);
         }
     });
 }
+
+	$(document).ready(function(){		
+			if($("#issueDash > div .alert").size()<12){
+				$('#loadMoreIssue').hide();
+			}
+	});
 </script>

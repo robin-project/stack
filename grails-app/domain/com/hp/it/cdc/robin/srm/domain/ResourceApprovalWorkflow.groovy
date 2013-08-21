@@ -1,11 +1,12 @@
 package com.hp.it.cdc.robin.srm.domain
 
-import org.bson.types.ObjectId
+import com.hp.it.cdc.robin.srm.constant.CurrencyEnum
 
 class ResourceApprovalWorkflow {
-	ObjectId id
-    List<Step> workFlowStep
-    Integer stepCount 
+	String range
+	CurrencyEnum currency
+    List<Step> workFlowStep = new ArrayList<Step>()
+    Integer stepCount
 
     static embedded = ['workFlowStep']
     static constraints = {

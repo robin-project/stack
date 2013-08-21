@@ -8,9 +8,13 @@ class Notification {
 	String from
 	String to
 	String cc
+	String bcc
 	String body
 	String subject
 	Date sentTs
+
+	Map<Date, Exception> exception
+	Integer retryCount = Integer.valueOf(0)
 	
 	Date dateCreated
     Date lastUpdated
@@ -18,6 +22,7 @@ class Notification {
     static constraints = {
 		to nullable:true
 		cc nullable:true
+		bcc nullable:true
 		sentTs nullable:true
     }
 }

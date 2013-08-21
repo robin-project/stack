@@ -21,7 +21,7 @@
 			<button type="button" class="close pull-right" data-dismiss="modal" aria-hidden="true">
 				<i class='icon-off'></i>
 			</button>
-			<h3><g:message code="admin.modal.email.label"/></h3>
+			<h3><g:message code="admin.modal.action.title" args="['Email']"/></h3>
 		</div>
 		<div class="modal-body">
 			<div id="email-resource" class="content span12" role="main" style="margin-top:10px">

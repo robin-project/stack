@@ -1,4 +1,8 @@
 <!-- Modal viewRequest-->
+<style>
+.avatar{ max-width:20px; myimg:expression(onload=function(){ this.style.width=(this.offsetWidth > 20)?"20px":"auto"}); }
+
+</style>
 <g:form id="viewForRequestForm">
 	<div id="viewForRequest-${it.id}" class="modal hide">
 		<div class="modal-header">
@@ -28,7 +32,7 @@
 								<td>&nbsp;&nbsp;&nbsp;</td>
 								<!-- class warn success info -->
 								<td><avatar:gravatar
-										email="${activity.activityUser.userBusinessInfo2}" /></td>
+										email="${activity.activityUser.userBusinessInfo2}"/></td>
 								<td>
 									${activity.activityUser.userBusinessInfo3}
 								</td>

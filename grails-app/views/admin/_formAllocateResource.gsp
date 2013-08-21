@@ -1,5 +1,5 @@
 <!-- Modal allocateResource-->
-<g:form id="allocateForRequestForm">
+<g:form id="allocateForRequestForm" name="allocateActionForm-${it.id}">
 	<input type="hidden" name="requestId" value="${it.id}"/>
 	<div id="allocateForRequest-${it.id}" class="modal hide">
 		<div class="modal-header">
@@ -47,15 +47,28 @@
 				<div class="well">
 					<div id="app_res-${it.id}">
 						<div class="control-group">
-							<g:select class="resourceTypeSelection" name="resourceType_1"
-								from="${com.hp.it.cdc.robin.srm.domain.ResourceType.list()}"
-								optionKey="id" noSelection="['':' ']" 
-								required=""
-								style="width:60%" />
-							<span class="serialSelection" style="width:30%">
-								<g:select name="serialNr_1" style="width:30%"
-								 from="${serials}"/>
-							</span>
+							<g:select class="resourceTypeSelection validate[required]" name="resourceType_1"
+								from="${com.hp.it.cdc.robin.srm.domain.ResourceType.list().sort(new java.util.Comparator<com.hp.it.cdc.robin.srm.domain.ResourceType>() {
+ 										public int compare(com.hp.it.cdc.robin.srm.domain.ResourceType lhs, com.hp.it.cdc.robin.srm.domain.ResourceType rhs) {
+    									    int level1 = lhs.resourceTypeName.toLowerCase().compareTo(rhs.resourceTypeName.toLowerCase())
+  											if (level1 != 0){
+  												return level1
+  											}else{
+  												int level2 = (lhs.model.toLowerCase()).compareTo(rhs.model.toLowerCase())
+  												if (level2 != 0){
+  													return level2
+  												}else{
+  													return (lhs.supplier.toLowerCase()).compareTo(rhs.supplier.toLowerCase())
+  													
+  												}
+  											}
+  										}
+								})}"
+								optionKey="id" noSelection="['':' ']"/>
+
+
+							<g:select class="serialSelection validate[required]" name="serialNr_1" style="width:30%"
+									 from="${serials}"/>
 							<button type="button" class="btn btn-small" style="vertical-align: top;">
 								<i class="icon-minus"></i>
 							</button>
@@ -71,10 +84,10 @@
 		</div>
 
 		<div class="modal-footer">
-			<g:submitToRemote url="[action:'allocate']"
-				class="btn btn-primary pull-right span3"
-				value="${message(code: 'allocate.button.label', default: 'Allocate')}"
-				update="SRM-BODY-CONTENT" after="hideModal('allocateForRequest-${it.id}')" />
+			
+			<g:submitButton class="btn btn-primary pull-right span3" name="allocate" 
+				value="${message(code: 'allocate.button.label', default: 'Allocate')}"/>
+				
 			<div class='pull-right'>&nbsp;</div>
 			<button class="btn span3 pull-right" data-dismiss="modal"
 				aria-hidden="true">
@@ -85,6 +98,23 @@
 	</div>
 </g:form>
 <script>
+	function validateAllocateActionForm(){
+		$("#allocateActionForm-${it.id}").validationEngine('attach', {
+			onValidationComplete: function(form, status){
+				if (status){
+					$.ajax({
+						url:'<g:createLink action="allocate"/>',  
+						type:'POST',
+						data:$("#allocateActionForm-${it.id}").serialize(),
+						success:function(data){
+							$('#allocateForRequest-${it.id}').modal('hide');
+							$('#SRM-BODY-CONTENT').html(data);
+		                }  
+			     });
+				}
+			}  
+		});
+	}
 	$(document).ready(function() {
 				var cursor = 1
 				var resource_type_html = $("#app_res-${it.id}").html()
@@ -110,10 +140,13 @@
 						url:'loadNormalSerials',
 						data: "typeId=" + this.value + "&selectionName="+this.name, 
 						cache: false,
-						success: function(html) {
-							resourceTypeSelection.siblings(".serialSelection").html(html);
+						complete: function(html) {
+							resourceTypeSelection.siblings(".serialSelection").html(html.responseText);
 						}
 		     		});
-				})
+				});
+
+				//validate Allocate Action Form
+				validateAllocateActionForm();
 			});
 </script>

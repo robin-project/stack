@@ -1,6 +1,8 @@
 <script>
 function toggle(id){
-    $('ul > div.tab-pane:not(#'+id+')').hide();
+    console.log(id);
+    $('div.nav.nav-list div.tab-pane:not(#'+id+')').hide();
+    // $('ul > div.tab-pane:not(#'+id+')').hide();
     $('.tab-pane #'+id).toggle('fast');
 }
 
@@ -16,7 +18,8 @@ function loadNewData(){
         success: function(html){
             if(html){
                 $(".pagination").show();
-                $("#requests-tab").append(html);
+                $(html).insertAfter(".tab-pane:last");
+                // $("#requests-tab").append(html);
             }
             $("#offsetInput").attr("value",parseInt(value)+1);
             $(".loader").remove();
@@ -30,19 +33,23 @@ function loadNewData(){
             <div class="tabbable">
                 <ul class="nav nav-list" id="requests-tab">
                     <li class="nav-header"><h5>Open requests</h5></li>
-                    <g:render template="/query/requests" model="[requests:openRequests]"/>
+                    <div class="nav nav-list" id="open-requests">
+                        <g:render template="/query/requests" model="[requests:openRequests]"/>
+                    </div>
                     <br />
                     <li class="nav-header"><h5>Closed requests</h5></li>
-                    <g:render template="/query/requests" model="[requests:closedRequests]"/>
+                    <div class="nav nav-list" id="closed-requests">
+                        <g:render template="/query/requests" model="[requests:closedRequests]"/>
+                    </div>
+                    <g:if test="${closedRequestsCount > 15}">
+                        <div class="pagination ajax_paginate">
+                            <a href="javascript:void(0)" onclick="loadNewData()">
+                                <g:message code="default.paginate.more"/>
+                            </a>
+                        </div>
+                    </g:if>
                     <input type="hidden" id="offsetInput" value="1">
                 </ul>
-                <g:if test="${closedRequestsCount > 3}">
-                    <div class="pagination ajax_paginate">
-                        <a href="javascript:void(0)" onclick="loadNewData()">
-                            <g:message code="default.paginate.more"/>
-                        </a>
-                    </div>
-                </g:if>
             </div>
         </div>
     </div>

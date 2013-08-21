@@ -8,31 +8,43 @@ class NotificationRoute extends RouteBuilder {
 
 	def grailsApplication
 
+	@Override
 	void configure() {
 		def config = grailsApplication?.config
 
 		from('timer://notification?fixedRate=true&period=60000&delay=60000').to("bean://notificationService?method=findNotification")
 		
 		/*
-		 * workflow that send the notificaiton
+		 * Router that send the notificaiton
 		 */
 		from("seda:sendNotification").split().body(Collection.class)
+			.doTry()
 				.process{ Exchange exchange ->
 					def notification = exchange.getIn().getBody()
 					exchange.getIn().setHeader("Content-Type", "text/html")
 					exchange.getIn().setHeader("id", notification.id)
 					exchange.getIn().setHeader("subject", notification.subject)
 					exchange.getIn().setHeader("from", notification.from)
-					exchange.getIn().setHeader("to", "fm.core.chinateam@hp.com")
-					//exchange.getIn().setHeader("to", notification.to)
-					//exchange.getIn().setHeader("cc", notification.cc)
+					if (SystemProperty.first().productionMode){
+						exchange.getIn().setHeader("to", notification.to)
+						exchange.getIn().setHeader("cc", notification.cc)
+						exchange.getIn().setHeader("bcc", notification.bcc)
+					}else{
+						exchange.getIn().setHeader("to", "fm.core.chinateam@hp.com")
+					}
 					exchange.getIn().setBody(notification.body)
 				}
 				.to("smtp://smtp.hp.com:25")
-				.to("bean://notificationService?method=markNotificationSent")
+				.to("bean://notificationService?method=markNotificationSentSuccess")
+			.doCatch(Exception.class)
+				.process{ Exchange exchange ->
+					log.info exchange.getProperty(Exchange.EXCEPTION_CAUGHT, Exception.class)
+				}
+				.to("bean://notificationService?method=markNotificationSentFail")
+			.end()
 		
 		/*
-		 * workflow that request notification
+		 * Router that request notification
 		 */
 		from('seda:requestNotification')
 		.process { Exchange exchange ->
@@ -42,7 +54,11 @@ class NotificationRoute extends RouteBuilder {
 				exchange.getIn().setHeader(e.key, e.value)
 			}
 			//dispatch to different template
-			if(exchange.in.headers["res"] != null )
+			if(exchange.in.headers["req"] == null)
+			{
+				exchange.getIn().setHeader("CamelVelocityResourceUri","template/resource_allocated_directly.vm")
+			}
+			else if(exchange.in.headers["res"] != null )
 			{
 				exchange.getIn().setHeader("CamelVelocityResourceUri","template/resource_allocated.vm")
 			}
@@ -59,6 +75,7 @@ class NotificationRoute extends RouteBuilder {
 			}
 			else if(exchange.in.headers["req"].requestType == RequestTypeEnum.TRANSFER)
 			{
+				exchange.in.setHeader('transfer_resource',exchange.in.headers["req"].requestDetail.resource.toString())
 				if(exchange.in.headers["req"].status == RequestStatusEnum.REJECTED)
 				{
 					exchange.getIn().setHeader("CamelVelocityResourceUri","template/resource_transfer_rejected.vm")
@@ -67,13 +84,11 @@ class NotificationRoute extends RouteBuilder {
 				}
 			}
 			exchange.getIn().setBody(null)
-        }
-		.to("velocity:dummy").process{ Exchange exchange ->
+        }.to("velocity:dummy").process{ Exchange exchange ->
 			String content =  exchange.getIn().getBody(String.class)
 			int startIndex = content.indexOf("<title>")
 			int endIndex = content.indexOf("</title>")
 			exchange.getIn().setHeader("subject",content.substring(startIndex + 7, endIndex))
-		}
-    	.to('bean://notificationService?method=persistNotification')
+		}.to('bean://notificationService?method=persistNotification')
 	}
 }

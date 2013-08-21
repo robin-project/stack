@@ -4,7 +4,8 @@ class SignoutController {
 
     def index() { 
 		log.info params
-		session.removeAttribute("user")
-		redirect(url:"/")
+		//session.removeAttribute("user")
+		session.invalidate()
+		redirect(uri:"/")
 	}
 }

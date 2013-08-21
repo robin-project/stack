@@ -3,11 +3,11 @@
 <title>Resource apply request has been rejected</title>
 </head>
 <body>
-	Dear  $headers.req.submitUser.userBusinessInfo3,<br/>
+	Dear  $headers.greeting,<br/>
 	This message is to inform you that one request you submitted has been rejected.<br/>
 	<br/>
-	Request Data:<br/>
-	Submit user : $headers.req.submitUser <br/>
+	Request detail:<br/>
+	Submit user : $headers.submitUser <br/>
 	Request date : $headers.req.dateCreated <br/>
 	Request details : $headers.resourceType <br/>
 	Request quantity : $headers.req.requestDetail.quantityNeed <br/>
@@ -24,7 +24,7 @@
 	Logon to approve/reject the request:<br/>
 	<br/>
 	Thank you for your support!<br/>
-	Stack team<br/><br/>
+	HP-IT DS/CDC Operation Team<br/><br/>
 	
 	This is an automatically generated e-mail. Please do not reply to this message.<br/>
 </body>

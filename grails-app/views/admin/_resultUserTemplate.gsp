@@ -7,7 +7,11 @@
 	</td>
     <td>${user.userBusinessInfo2}</td>
     <td>${user.userBusinessInfo1}</td>
-    <td>${user.status}</td>
-    <td>${user.role}</td>
+    <td>${user.userBusinessInfo4}</td>
+    <td>${user?.manager?.userBusinessInfo3}</td>
+    <%--<td>${user.userBusinessInfo5}</td>--%>
+    <td>${com.hp.it.cdc.robin.srm.domain.Location.findByLocationCode(user.userBusinessInfo5)?.alias}</td>
+    <td>${user?.status}</td>
+    <td>${user?.role}</td>
 </tr>
 </g:each>

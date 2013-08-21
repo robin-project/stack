@@ -41,7 +41,7 @@ class Resource {
 	]
 	
 	String getPrintableId(){
-		return "res-" + purchase.resourceType.resourceTypeName + "-" + id
+		return purchase.resourceType.resourceTypeName + "-" + id.toString().substring(20,24)
 	}
 	
 	String toString(){

@@ -11,9 +11,13 @@ import com.hp.it.cdc.robin.srm.domain.Activity
 import com.hp.it.cdc.robin.srm.domain.Request
 import com.hp.it.cdc.robin.srm.domain.SystemProperty
 import com.hp.it.cdc.robin.srm.domain.User
+import com.hp.it.cdc.robin.srm.domain.Location
+
 
 class ValidateUserService {
 	static ldap = new LdapLookupService()
+
+	def location_code_lsit
 	
     def service() {
 		syncUser()
@@ -56,6 +60,8 @@ class ValidateUserService {
 		log.info "=======================Synchronize User from LDAP======================="
 		try
 		{
+			location_code_lsit = Location.list().locationCode.unique()
+
 			def personSummary = ldap.getPersonSummaryByEmail(SystemProperty.first().treelevelTopUserBusinessInfo1)
 			loopAllUsers(personSummary,1, null)
 		}
@@ -79,14 +85,19 @@ class ValidateUserService {
 			if(p.employeeNr == null) return
 
 			def user = User.findByUserBusinessInfo1(p.employeeNr)
-			if (user == null){
+
+			if(user == null){
 				user = new User()
-				user.status=UserStatusEnum.INACTIVE
 				user.role=RoleEnum.USER
-			}else{
-				if (user.status==UserStatusEnum.REMOVED){
-					user.status=UserStatusEnum.ACTIVE // reactivate user when he comes back to organization
-				}
+				user.status=UserStatusEnum.INACTIVE
+			}else if (user.status==UserStatusEnum.REMOVED){
+					user.status=UserStatusEnum.INACTIVE // reactivate user when he comes back to organization
+			}
+			
+
+			/* Terminated , Pending, Active*/
+			if ("Terminated".equals(p.status)) {
+				user.status=UserStatusEnum.REMOVED
 			}
 			
 			if (manager != null){
@@ -97,11 +108,26 @@ class ValidateUserService {
 			user.userBusinessInfo1 = p.employeeNr
 			user.userBusinessInfo2 = p.email
 			user.userBusinessInfo3 = p.fullName
+			if('Regular'.equals(p.employeeType) || 'Intern'.equals(p.employeeType))
+				user.userBusinessInfo4 = p.employeeType
+			else
+				user.userBusinessInfo4 = 'Contractor'
+			user.userBusinessInfo5 = p.locationcode
+			// add new location code if not exists
+			addNewLocation(p.locationcode)
 			user.save(flush:true)
 			
 			return user
 		}catch(Exception e){
 			log.error e
+		}
+	}
+
+	def addNewLocation(String locationCode){
+		if(!location_code_lsit.contains(locationCode) && locationCode!=null )
+		{
+			new Location(locationCode:locationCode, alias:"unspecificed").save()
+			location_code_lsit.add(locationCode)
 		}
 	}
 }

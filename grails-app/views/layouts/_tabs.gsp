@@ -1,8 +1,5 @@
-
 <g:if
-	test="${session["user"].role==com.hp.it.cdc.robin.srm.constant.RoleEnum.ADMIN && session["view"]=="ADMIN"}">
-
-
+	test="${session["user"].role>=com.hp.it.cdc.robin.srm.constant.RoleEnum.ADMIN  && session["view"]=="ADMIN"}">
 	<!-- admin menu -->
 	<div class="row-fluid">
 		<div class="span12">
@@ -65,29 +62,20 @@
 							<g:message code="tab.my.requests.label" default="My requests" />
 						</g:remoteLink></li>
 					<li id="TAB-20003"><g:remoteLink action="myApprovals"
-							update="SRM-BODY-CONTENT" after="toggleToTab('TAB-20003')"><i class="icon-bookmark"></i>&nbsp;
+							update="SRM-BODY-CONTENT" after="toggleToTab('TAB-20003')" onSuccess="refreshApprovlesCount()"><i class="icon-bookmark"></i>&nbsp;
 							<g:message code="tab.my.approvals.label" default="My approvals" />
-							<span class="badge badge-important">${com.hp.it.cdc.robin.srm.domain.Request.countByNextActionUserBusinessInfo1(session["user"].userBusinessInfo1)==0?"":com.hp.it.cdc.robin.srm.domain.Request.countByNextActionUserBusinessInfo1(session["user"].userBusinessInfo1) }</span>
+							<g:approvalsCount user="${session["user"]}"/>
+							%{-- <span id="tab_alert_approval_number" class="badge badge-important">${com.hp.it.cdc.robin.srm.domain.Request.countByNextActionUserBusinessInfo1(session["user"].userBusinessInfo1)}</span> --}%
+							%{-- <g:render template="/query/loadTabAlertApprovalNumber"/> --}%
 						</g:remoteLink></li>
 						
-					
-
-					
-					
-								<g:if
-									test="${session["user"].role==com.hp.it.cdc.robin.srm.constant.RoleEnum.ADMIN}">
-									<g:link controller="admin" action="index" class="btn pull-right">
-											<i class="icon-hand-right"></i>&nbsp;<g:message code="workasadmin.label" default="Work as admin" />
-										</g:link>
-								</g:if>
-
-								
-				
-			
+					<g:if
+						test="${session["user"].role>=com.hp.it.cdc.robin.srm.constant.RoleEnum.ADMIN}">
+						<g:link controller="admin" action="index" class="btn pull-right">
+								<i class="icon-hand-right"></i>&nbsp;<g:message code="workasadmin.label" default="Work as admin" />
+							</g:link>
+					</g:if>
 				</ul>
-				
-
-
 			</div>
 		</div>
 		<!--/span-->

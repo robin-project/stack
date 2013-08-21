@@ -49,4 +49,12 @@ modules = {
 	validateEngineEn {
 		resource url:'js/jquery.validationEngine-en.js'
 	}
+
+	select2{
+		resource url:'js/select2.js'
+	}
+
+	scrollto{
+		resource url:'js/scrollto.js'
+	}
 }

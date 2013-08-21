@@ -1,5 +1,4 @@
 <div>
-
 	<span> <a href="http://gravatar.com/emails/" target="_blank"
 		 data-toggle="tooltip" data-placement="bottom" title=""
 		data-original-title="${message(code:'change.avatar')}"><div>
@@ -7,8 +6,6 @@
 					size="300" cssClass="img-polaroid" ></avatar:gravatar>
 			</div></a>
 	</span>
-
-
 </div>
 
 <div class="caption">
@@ -26,22 +23,7 @@
 
 		<hr style="margin-bottom: 0">
 	</div>
-
-	<div class="row-fluid" style="text-align: center;">
-		<div class="span4">
-			<h2 style="margin-top:0;margin-bottom:0">${com.hp.it.cdc.robin.srm.domain.Resource.countByCurrentUser(session["user"]) }</h2>
-			<small style="font-size: 70%"><g:message code="dash.owned" /></small>
-		</div>
-		<div class="span4">
-			<h2 style="margin-top:0;margin-bottom:0">${com.hp.it.cdc.robin.srm.domain.Request.countBySubmitUserAndStatusAndRequestType(session["user"],com.hp.it.cdc.robin.srm.constant.RequestStatusEnum.NEW, com.hp.it.cdc.robin.srm.constant.RequestTypeEnum.APPLY) }</h2>
-			<small style="font-size: 70%"><g:message code="dash.requested" /></small>
-		</div>
-		<div class="span4">
-			<h2 style="margin-top:0;margin-bottom:0">${com.hp.it.cdc.robin.srm.domain.Request.countByStatusAndRequestTypeAndNextActionUserBusinessInfo1(com.hp.it.cdc.robin.srm.constant.RequestStatusEnum.NEW, com.hp.it.cdc.robin.srm.constant.RequestTypeEnum.TRANSFER,session["user"].userBusinessInfo1) }</h2>
-			<small style="font-size: 70%"><g:message code="dash.toaccept" /></small>
-		</div>
-		
-	</div>
+	<g:render template="/query/dashboardNumbers"/>
 	<hr style="margin: 0">
 </div>
 

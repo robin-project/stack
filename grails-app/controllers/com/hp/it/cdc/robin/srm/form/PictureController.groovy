@@ -199,6 +199,7 @@ class PictureController {
 			def mongoSettings = grailsApplication.config.mongo
 			Mongo mongo = new Mongo(mongoSettings.host, mongoSettings.port.intValue());
 			def db = mongo.getDB(mongoSettings.databaseName);
+			db.authenticate(mongoSettings.username,mongoSettings.password.toCharArray())
 			_gridfs = new GridFS(db,mongoSettings.bucket)
 		}
 

@@ -19,10 +19,12 @@ class SigninController {
 	def x509Service
 
 	def index() {
+
+		redirect(uri:'/')
 	}
 
 	def login(){
-		String email = params.userBusinessInfo2
+		String email = params.userBusinessInfo2.toLowerCase()
 		String password = params.password
 
 		EmailValidator emailValidator = EmailValidator.getInstance()

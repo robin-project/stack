@@ -1,8 +1,17 @@
 <!DOCTYPE html>
-<html>
+<!--[if lt IE 7 ]> <html lang="en" class="no-js ie6"> <![endif]-->
+<!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
+<!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
+<!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!-->
+<html lang="en" class="no-js">
+<!--<![endif]-->
 <head>
+<meta http-equiv="X-UA-Compatible" content="chrome=1,IE=edge">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title><g:message code="srm.application.name.label" /></title>
-<r:require modules="bootstrap" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<r:require modules="bootstrap,scrollto" />
 <r:layoutResources />
 <link rel="shortcut icon"
 	href="${resource(dir: 'images', file: 'favicon.ico')}"
@@ -65,11 +74,18 @@ background-color: #f5f5f5;
 }
 
 </style>
+<link rel="stylesheet" href='<g:resource  dir="css" file="grumble/grumble.css" />' type="text/css" />
+<script src='<g:resource  dir="js" file="grumble/Bubble.js" />' type="text/javascript"></script>
+<script src='<g:resource  dir="js" file="grumble/jquery.grumble.js" />' type="text/javascript"></script>
 </head>
 <body>
 	<browser:choice>
-		<browser:isMsie versionLower="9">
-			<DIV class="alert">
+		<browser:isMsie versionGreater="8"></browser:isMsie>
+		<browser:isSafari></browser:isSafari>
+		<browser:isChrome></browser:isChrome>
+		<browser:isFirefox></browser:isFirefox>
+		<browser:otherwise>
+			<DIV class="alert alert-error">
 				<div class="container row-fluid">
 
 					<div class="media offset2 span8">
@@ -82,16 +98,9 @@ background-color: #f5f5f5;
 
 				</div>
 			</DIV>
-		</browser:isMsie>
-		<browser:isSafari></browser:isSafari>
-		<browser:isChrome></browser:isChrome>
-		<browser:isFirefox></browser:isFirefox>
-		<%--			<browser:isOpera></browser:isOpera>--%>
-		<%--			<browser:isiPhone></browser:isiPhone>--%>
-		<%--			<browser:isiPad></browser:isiPad>--%>
-		<%--			<browser:isWindows></browser:isWindows>--%>
-		<%--			<browser:isMobile></browser:isMobile>--%>
+		</browser:otherwise>
 	</browser:choice>
+	<a href="https://github.com/robin-hp/stack" target="_blank"><img src="${resource(dir: 'images', file: 'forkus_github.png')}" class="pull-right"/></a>
 	<div id="body" class="container">
 		<div id="spacer-top" class="spacer row-fluid"></div>
 		<div id="login" class="row-fluid">
@@ -107,11 +116,17 @@ background-color: #f5f5f5;
 				<div>
 					<div class="span12">
 						<span class="span12" />
-
+			<g:if test="${flash.message}">
+				<div class="alert alert-error" role="status">
+					<button type="button" class="close" data-dismiss="alert">&times;</button>
+					${flash.message}
+				</div>
+			</g:if>
 						<g:form
 							url="${grailsApplication.config.grails.serverSecureURL+'/signin/loginWithDb'}"
 							style="margin:0px">
-							<g:submitButton class="btn btn btn-info span12"
+
+							<g:submitButton class="btn btn-info span12"
 								name="login_classb" value="${message(code:'login.classb')}"></g:submitButton>
 
 
@@ -130,17 +145,17 @@ background-color: #f5f5f5;
 								class="${hasErrors(bean: userInstance, field: 'userBusinessInfo2', 'error')} ">
 								<g:textField placeholder="Your HP Email" class="span12"
 									name="userBusinessInfo2"
-									value="${userInstance?.userBusinessInfo2}" />
+									value="${userInstance?.userBusinessInfo2}" required=""/>
 							</div>
 							<div
 								class="${hasErrors(bean: userInstance, field: 'password', 'error')} ">
 								<g:passwordField placeholder="Stack Password" class="span12"
-									name="password" value="${userInstance?.password}" />
+									name="password" value="${userInstance?.password}" required=""/>
 							</div>
 							<div class="control-group">
 								<g:submitButton class="btn btn-info span12" name="login_srm"
 									name="${message(code:'login.srm')}" />
-								<span class="muted pull-right"><g:link
+								<span class="muted pull-right  grumble_tip"><g:link
 										controller="signup">
 										<small><g:message code="login.hint.forgetpassord" /></small>
 									</g:link></span>
@@ -206,45 +221,17 @@ background-color: #f5f5f5;
 					</div>
 				</div>
 			</div>
-			<div class="row-fluid">&nbsp;</div>
+			<div class="row-fluid" id="end">&nbsp;</div>
 		</div>
 	</div>
 
 	<g:javascript library="application" />
+	<g:javascript library="placeholder" />
 	<script>
-		$.fn.scrollTo = function(target, options, callback) {
-			if (typeof options == 'function' && arguments.length == 2) {
-				callback = options;
-				options = target;
-			}
-			var settings = $.extend({
-				scrollTarget : target,
-				offsetTop : 50,
-				duration : 500,
-				easing : 'swing'
-			}, options);
-			return this
-					.each(function() {
-						var scrollPane = $(this);
-						var scrollTarget = (typeof settings.scrollTarget == "number") ? settings.scrollTarget
-								: $(settings.scrollTarget);
-						var scrollY = (typeof scrollTarget == "number") ? scrollTarget
-								: scrollTarget.offset().top
-										+ scrollPane.scrollTop()
-										- parseInt(settings.offsetTop);
-						scrollPane.animate({
-							scrollTop : scrollY
-						}, parseInt(settings.duration), settings.easing,
-								function() {
-									if (typeof callback == 'function') {
-										callback.call(this);
-									}
-								});
-					});
-		}
+
 		$(document).ready(
 				function() {
-
+					
 					$('#body').css("height",
 							$(window).innerHeight() - $('#footer').height());
 					$('.spacer').css(
@@ -258,9 +245,32 @@ background-color: #f5f5f5;
 					}
 					$('#learnMore').click(function() {
 						$('#learnMoreContent').show();
-						$('body').scrollTo('#learnMoreContent');
+						$('body,html').scrollTo('#end');
 					});
+					$('input, textarea').placeholder();
 
+
+					/* add the hint to help understanding process */
+					$("#login [type=submit]").click(function(){
+						document.cookie = "fish=" + new Date()
+					})
+					/*var current_dt = new Date()
+					var end_dt = new Date("10/10/2013 18:00")
+					if(current_dt<end_dt){*/
+						/*if(document.cookie == null || document.cookie.indexOf('fish')<0 )
+						{*/
+							$('.grumble_tip').grumble(
+								{
+									text: 'Click here to signup with HP email first',
+									/*type: 'alt-',*/
+									angle: 120,
+									distance: 3,
+									showAfter: 2000,
+									hideAfter: 8000,
+								}
+							)
+						/*}*/
+					/*}*/
 				});
 	</script>
 	<r:layoutResources />

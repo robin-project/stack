@@ -11,14 +11,8 @@
 			</h3>
 		</div>
 		<div class="modal-body">
-		
-		<g:form method="post">
 			<g:hiddenField name="id" value="${user?.id}" />
-			<g:hiddenField name="version" value="${user?.version}" />
-			<fieldset class="form">
-				<g:render template="formEditUserDetails" />
-			</fieldset>
-		</g:form>
+			<g:render template="formEditUserDetails" />
 		</div>
 		<div class="modal-footer">
 			<g:submitToRemote url="[action:'saveUserDetails']"

@@ -7,7 +7,7 @@
 	Dear $headers.nextUser.userBusinessInfo3,<br/>
 	This message is to inform you that one employee has submitted his/her register information in the Stack system and need your approval.<br/>
 	<br/>
-	Request Data:<br/>
+	Request detail:<br/>
 	Submit user : $headers.submitUser <br/>
 	Request date : $headers.req.dateCreated <br/>
 	Request details : $headers.resourceType <br/>
@@ -25,7 +25,7 @@
 	Logon to approve/reject the request:<br/>
 	<br/>
 	Thank you for your support!<br/>
-	Stack team<br/><br/>
+	HP-IT DS/CDC Operation Team<br/><br/>
 	
 	This is an automatically generated e-mail. Please do not reply to this message.<br/>
 </body>

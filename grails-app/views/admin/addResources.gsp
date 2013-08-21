@@ -23,7 +23,6 @@
 	}
 
 	$(document).ready(function(){	
-		validatePuchaseForm();
 		enableDatepicker();	
 		var serialhtml=$("#serialInput").html()		
 		$("#quantity").change(
@@ -55,6 +54,14 @@
  	       }
 		
 		);
+		validatePuchaseForm();
+		$("#resourceTypePictures").click(function(){
+			$("#purchaseForm").unbind();
+		});
+		$("#putInPoolId").hover(function(){
+			$("#purchaseForm").unbind();
+			validatePuchaseForm();
+		});
 	});
 
 </script>
@@ -102,7 +109,22 @@
 
 						</label>
 						<g:select id="resourceType" name="resourceType.id"
-							from="${com.hp.it.cdc.robin.srm.domain.ResourceType.list()}"
+							from="${com.hp.it.cdc.robin.srm.domain.ResourceType.findAllByIsBlockIsNullOrIsBlock(false).sort(new java.util.Comparator<com.hp.it.cdc.robin.srm.domain.ResourceType>() {
+ 										public int compare(com.hp.it.cdc.robin.srm.domain.ResourceType lhs, com.hp.it.cdc.robin.srm.domain.ResourceType rhs) {
+    									    int level1 = lhs.resourceTypeName.toLowerCase().compareTo(rhs.resourceTypeName.toLowerCase())
+  											if (level1 != 0){
+  												return level1
+  											}else{
+  												int level2 = (lhs.model.toLowerCase()).compareTo(rhs.model.toLowerCase())
+  												if (level2 != 0){
+  													return level2
+  												}else{
+  													return (lhs.supplier.toLowerCase()).compareTo(rhs.supplier.toLowerCase())
+  													
+  												}
+  											}
+  										}
+								})}"
 							optionKey="id" required=""
 							value="${newPurchaseInstance?.resourceType?.id}"
 							class="many-to-one span4"
@@ -208,13 +230,13 @@
 								code="purchase.comment.label" default="Comment" />
 
 						</label>
-						<g:textArea name="comment" class="span7 offset3 validate[required, minSize[5]]" rows="8"
-							value="${purchaseInstance?.comment}" />
+						<g:textArea id="commentId" name="comment" class="span7 offset3 validate[required, minSize[5]]" rows="8"
+							value="${purchaseInstance?.comment}"/>
 					</div>
 
 
 					<fieldset class="form-actions">
-						<g:submitButton class="btn btn-primary pull-right submit" name="putinpool" value="${message(code: 'button.label.putinpool', default: 'Put in pool')}"/>
+						<g:submitButton id="putInPoolId" class="btn btn-primary pull-right submit" name="putinpool" value="${message(code: 'button.label.putinpool', default: 'Put in pool')}"/>
 					</fieldset>
 				</g:form>
 			</div>

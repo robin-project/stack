@@ -1,11 +1,10 @@
 package com.hp.it.cdc.robin.srm.form
 
-import java.util.Date;
-
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 
 import pl.touk.excel.export.WebXlsxExporter
 import pl.touk.excel.export.XlsxExporter
+import srm.web.NotificationService
 
 import com.hp.it.cdc.robin.srm.constant.ActivityTypeEnum
 import com.hp.it.cdc.robin.srm.constant.ArriveDateTypeEnum
@@ -13,21 +12,21 @@ import com.hp.it.cdc.robin.srm.constant.RequestStatusEnum
 import com.hp.it.cdc.robin.srm.constant.ResourceStatusEnum
 import com.hp.it.cdc.robin.srm.constant.RoleEnum
 import com.hp.it.cdc.robin.srm.constant.TabEnum
+import com.hp.it.cdc.robin.srm.constant.UserStatusEnum
 import com.hp.it.cdc.robin.srm.domain.Activity
 import com.hp.it.cdc.robin.srm.domain.Issue
+import com.hp.it.cdc.robin.srm.domain.Location
 import com.hp.it.cdc.robin.srm.domain.Purchase
 import com.hp.it.cdc.robin.srm.domain.Request
 import com.hp.it.cdc.robin.srm.domain.Resource
 import com.hp.it.cdc.robin.srm.domain.ResourceLog
 import com.hp.it.cdc.robin.srm.domain.ResourceType
-import com.hp.it.cdc.robin.srm.domain.Usage
+import com.hp.it.cdc.robin.srm.domain.SystemProperty
 import com.hp.it.cdc.robin.srm.domain.User
+import com.hp.it.cdc.robin.srm.domain.ConversionRate
 import com.mongodb.Mongo
 import com.mongodb.gridfs.GridFS
 import com.mongodb.gridfs.GridFSInputFile
-import com.hp.it.cdc.robin.srm.domain.SystemProperty
-
-import srm.web.NotificationService;
 
 
 class AdminController {
@@ -39,7 +38,7 @@ class AdminController {
 
 	def index() {
 		//        redirect(action: "list", params: params)
-		session.setAttribute("view", RoleEnum.ADMIN.description)
+		session.setAttribute("view", "ADMIN")
 	}
 
 	def allocateResources(Integer max){
@@ -52,21 +51,32 @@ class AdminController {
 				RequestStatusEnum.PARTIAL
 			]
 		}.list(sort:"id",max:params.max)
-		[requestInstanceList: requestInstanceList, requestInstanceTotal: Request.count()]
+		def locationList = Location.list()
+		[requestInstanceList: requestInstanceList, requestInstanceTotal: Request.count(),locationList:locationList]
 	}
 
 	def renderAllocateModels(Integer max){
 		log.info params
 		session.setAttribute("tab", TabEnum.TAB_ADMIN_ALLOCATE_RESOURCES)
 		params.max = Math.min(max ?: 10, 100)
-
-		def requestInstanceList = Request.where{
+		def user = User.findByUserBusinessInfo1(params.userBusinessInfo1)
+		def requestInstanceList 
+		if (user){
+			requestInstanceList = Request.where{
+			(status in [
+				RequestStatusEnum.WAITING_ALLOCATED,
+				RequestStatusEnum.PARTIAL
+			])&&(submitUser==user)}.list(sort:"id")
+		}else{
+			requestInstanceList = Request.where{
 			status in [
 				RequestStatusEnum.WAITING_ALLOCATED,
 				RequestStatusEnum.PARTIAL
-			]
-		}.list(sort:"id",
-		offset:Integer.valueOf(params["offset"])*params.max,max:params.max)
+			]}.list(sort:"id",
+					offset:Integer.valueOf(params["offset"])*params.max,
+					max:params.max)
+		}//end else
+
 		render (template:"formAllocateResource",collection: requestInstanceList)
 	}
 
@@ -74,14 +84,24 @@ class AdminController {
 		log.info params
 		session.setAttribute("tab", TabEnum.TAB_ADMIN_ALLOCATE_RESOURCES)
 		params.max = Math.min(max ?: 10, 100)
-		def requestInstanceList = Request.where{
+		def user = User.findByUserBusinessInfo1(params.userBusinessInfo1)
+		def requestInstanceList 
+		if (user){
+			requestInstanceList = Request.where{
+			(status in [
+				RequestStatusEnum.WAITING_ALLOCATED,
+				RequestStatusEnum.PARTIAL
+			])&&(submitUser==user)}.list(sort:"id")
+		}else{
+			requestInstanceList = Request.where{
 			status in [
 				RequestStatusEnum.WAITING_ALLOCATED,
 				RequestStatusEnum.PARTIAL
-			]
-		}.list(sort:"id",
-		offset:Integer.valueOf(params["offset"])*params.max,
-		max:params.max)
+			]}.list(sort:"id",
+					offset:Integer.valueOf(params["offset"])*params.max,
+					max:params.max)
+		}
+		
 		render (template:"formViewResource",collection: requestInstanceList)
 	}
 
@@ -92,7 +112,16 @@ class AdminController {
 		log.debug 'save User...'
 		def userBusinessInfo1=params['userBusinessInfo1'];
 		def owner = User.findByUserBusinessInfo1(userBusinessInfo1);
-		if (owner == null) return;
+		if (owner == null) {
+			flash.error=message(code: 'flash.errorDemandUserNotFound')
+			redirect(action: "allocateResources");			
+			return;
+		}
+		if (owner.status==UserStatusEnum.REMOVED){
+			flash.error=message(code: 'flash.errorDemandRemovedUser', args:[owner])
+			redirect(action: "allocateResources");
+			return;
+		}
 
 		def allocations =  params.findAll{
 			it.key.contains("resourceType")
@@ -123,6 +152,8 @@ class AdminController {
 				log.debug 'save Resource...'
 				allocatedSerials += resource.serial+","
 				log.info 'allocatedSerials:' + allocatedSerials
+
+				notificationService.requestNotification(resource)
 			}
 		}//end of each
 
@@ -194,10 +225,10 @@ class AdminController {
 				req.currentStep+=1
 				req.addToActivities(new Activity(activityType:ActivityTypeEnum.CLOSED,
 				comment:"request fulfilled, close request",activityUser:user))
-				flash.message=message(code: 'flash.request.closed.success', args: ["req-apply-"+requestId])
+				flash.message=message(code: 'flash.request.closed.success', args: [req.getPrintableId()])
 			}else{
 				req.status=RequestStatusEnum.PARTIAL
-				flash.message=message(code: 'flash.request.partial.success', args: ["req-apply-"+requestId])
+				flash.message=message(code: 'flash.request.partial.success', args: [req.getPrintableId()])
 			}
 			req.save(flush:true)
 			log.debug 'save Request...'
@@ -207,13 +238,23 @@ class AdminController {
 
 	}
 
+	def toggleResourceTypeStatus(String typeId){
+		def resourceType = ResourceType.get(typeId)
+		resourceType.isBlock = resourceType.isBlock==true?false:true
+		resourceType.save(flush:true)
+		render(template:"currentResourceTypes")
+	}
+
 	def loadNormalSerials(){
 		log.info params
-		def typeId = params.typeId;
+		def typeId  = params.typeId;
+		def purchaseList = new ArrayList<String>();
+		if(typeId!=null && !"".equals(typeId) ){
+			purchaseList = Purchase.findAllByResourceType(ResourceType.get(typeId))
+		}
 		String selectionName= params.selectionName;
 		def patterns = selectionName.split("_")
 		def number = patterns[1];
-		def purchaseList = Purchase.findAllByResourceType(ResourceType.get(typeId))
 
 		def serials = new ArrayList<String>();
 		for (Purchase purchase: purchaseList){
@@ -227,9 +268,9 @@ class AdminController {
 		serials.remove(null);
 		serials.unique();
 		render (view:"serialSelection",model:[serials:serials, number:number])
-
 	}
-	def closeRequest(Integer requestId){
+
+	def closeRequest(String requestId){
 		log.info params
 		if (params.requestId==null){
 			return;
@@ -238,7 +279,7 @@ class AdminController {
 		User user = session.getAttribute("user");
 		user.save();
 		log.debug 'save User...'
-		if (RoleEnum.ADMIN.equals(user.role)){
+		if (RoleEnum.ADMIN<=user.role){
 			Request req = Request.get(requestId);
 			if(req != null){
 				req.status=RequestStatusEnum.CLOSED;
@@ -249,7 +290,7 @@ class AdminController {
 				comment:params.comment,activityUser:user));
 				req.save(flush:true);
 				log.debug 'save Request...'
-				flash.message = message(code: 'flash.request.closed.success', args: ["req-apply-"+requestId])
+				flash.message = message(code: 'flash.request.closed.success', args: [req.getPrintableId()])
 
 				redirect(action: "allocateResources");
 			}
@@ -279,12 +320,19 @@ class AdminController {
 			render (view:"addResources", model:[newPurchaseInstance:purchaseInstance, error:"error"])
 			return
 		}
-
+		
 		if (!purchaseInstance.save()) {
 			log.debug 'Unable to save purchaseInstance...'
 			//			render(view: "addResources", model: [purchaseInstance: purchaseInstance])
 			return
 		}
+
+		//update resourcetype latest unit price
+		ResourceType rt = purchaseInstance.resourceType
+		def rate=ConversionRate.findByCurrency(purchaseInstance.unitCurrency)==null?1:ConversionRate.findByCurrency(purchaseInstance.unitCurrency).rateToRmb
+		rt.latestUnitPriceInRmb=purchaseInstance.unitPrice * rate
+		rt.save(flush:true)
+		
 		def serials =  params.findAll{
 			it.key.contains("serial_")
 		}
@@ -296,7 +344,7 @@ class AdminController {
 				serTemp = "NA"
 			}
 			Resource newResource = new Resource(purchase:purchaseInstance,status:ResourceStatusEnum.NORMAL,serial:serTemp,
-			displayedModel:purchaseInstance.resourceType.resourceTypeName+ " "+purchaseInstance.resourceType.supplier+ " "+purchaseInstance.resourceType.model,
+			displayedModel:purchaseInstance.resourceType.resourceTypeName+ " "+purchaseInstance.resourceType.model+" ("+purchaseInstance.resourceType.supplier+ ")",
 			displayedProductNr:purchaseInstance.resourceType.productNr,
 			displayedArriveDate:purchaseInstance.arriveDate,
 			resourceLogs:[
@@ -337,9 +385,35 @@ class AdminController {
 
 		redirect(action: "addResources")
 	}
+	
+	def loadAllTypes(){
+		def types = ResourceType.list([sort:'resourceTypeName']).resourceTypeName
+		if (types!=null){
+			types.unique()
+		}
+		render(view:"resourceCascadeSelection", model:[value_list: types])
+	}
+	
+	def loadAllSuppliers(){
+		def suppliers = ResourceType.list([sort:'supplier']).supplier
+		if (suppliers!=null){
+			suppliers.unique()
+		}
+		render(view:"resourceCascadeSelection", model:[value_list: suppliers])
+	}
+	
+	def loadAllModels(){
+		def models = ResourceType.list([sort:'model']).model
+		if (models!=null){
+			models.unique()
+		}
+		render(view:"resourceCascadeSelection", model:[value_list: models])
+	}
 
 	def addResourceType() {
 		log.info params
+		flash.messageAddResourceType = null
+		flash.errorAddResourceType = null
 		def resourceTypeInstance = new ResourceType(params)
 		//		resourceTypeInstance.pictureNames = new ArrayList<String>()
 		//		resourceTypeInstance.getPictureNames().add("1d9b649a-a88b-42c0-9b82-066c8fa15bb2190295247_b4e6f33f7c_b.jpg");
@@ -350,7 +424,7 @@ class AdminController {
 		}
 
 		if (ResourceType.find(resourceTypeInstance)){
-			flash.error = message(code: 'flash.addResourceType.duplicate', args: [resourceTypeInstance])
+			flash.errorAddResourceType = message(code: 'flash.addResourceType.duplicate', args: [resourceTypeInstance])
 		}else{
 			if (!resourceTypeInstance.save(flush: true)) {
 				log.debug 'Unable to save ResourceType...'
@@ -359,10 +433,10 @@ class AdminController {
 				return
 			}
 
-			flash.message = message(code: 'flash.addResourceType.success', args: [resourceTypeInstance])
+			flash.messageAddResourceType = message(code: 'flash.addResourceType.success', args: [resourceTypeInstance])
 
 		}
-		redirect(action: "addResources")
+		render(template:"currentResourceTypes")
 	}
 
 
@@ -393,7 +467,7 @@ class AdminController {
 		log.debug 'save Picture ...'
 		String resourceTypeId = request.getParameter("resourceTypeId")
 		def resourceType = ResourceType.get(resourceTypeId)
-		resourceType.pictureNames.add(fileName)
+		resourceType.pictureNames.add(0,fileName)
 		resourceType.save()
 		log.debug 'save ResourceType ...'
 		//		render(view: "addResources")
@@ -402,8 +476,8 @@ class AdminController {
 	def queryResources(){
 		log.info params
 		session.setAttribute("tab", TabEnum.TAB_ADMIN_QUERY_RESOURCES)
-		flash.resources = null
 		flash.actionMessage = null
+		flash.errorMessage = null
 
 		//refresh the arriveType
 		if (params.refreshArriveType){
@@ -424,35 +498,55 @@ class AdminController {
 		}
 
 		//process resources subAction(returned, retire, lost, normal, broken, transfered)
-
-		if (flash.actionRes && flash.args){
+		if (params.actionResList && params.actionId){
 			def user = session['user']
 			user.save()
 			log.debug 'save User ... '
-			flash.actionRes.each {
-				Resource res = Resource.get(it.id)
-				if (flash.args.toString() == '[returnedItio]'){
-					res.status = ResourceStatusEnum.RETURNED_ITIO
-				}else if (flash.args.toString() == '[retired]'){
-					res.status = ResourceStatusEnum.RETIRED
-				}else if (flash.args.toString() == '[broken]'){
-					res.status = ResourceStatusEnum.BROKEN
-				}else if (flash.args.toString() == '[lost]'){
-					res.status = ResourceStatusEnum.LOST
-				}else if (flash.args.toString() == '[transferred]'){
-					res.status = ResourceStatusEnum.TRANSFERRED
-				}else if (flash.args.toString() == '[returned]'){
-					res.status = ResourceStatusEnum.NORMAL
-				}
+			
+			def resIdStatusArr = params.actionResList.substring(1,params.actionResList.size()-1).split(",")
+			for (int i=0; i<resIdStatusArr.length; i++){
+				def resIdStatus = resIdStatusArr[i].split("=")
+				def resId = resIdStatus[0].trim()
+				def oldStatus = resIdStatus[1].trim()
+				Resource res = Resource.get(resId)
 				res.currentUser = null
-				res.addToResourceLogs(new ResourceLog(status:res.status, dateCreated:new Date(), operateUser:user, logdetail: "update resource status from ["+it.status+"] to ["+res.status+"]"))
-				res.save()
-				log.debug 'save Resource... '
-				flash.actionMessage = message(code:"resource.action.msg", args:[
-					flash.actionRes.size(),
-					flash.args.toString()
-				])
+				if (params.actionId == '[returnedItio]'){
+					res.status = ResourceStatusEnum.RETURNED_ITIO
+				}else if (params.actionId == '[retired]'){
+					res.status = ResourceStatusEnum.RETIRED
+				}else if (params.actionId == '[broken]'){
+					res.status = ResourceStatusEnum.BROKEN
+				}else if (params.actionId == '[lost]'){
+					res.status = ResourceStatusEnum.LOST
+				}else if (params.actionId == '[returned]'){
+					res.status = ResourceStatusEnum.NORMAL
+					if (res.purchase.resourceType.isBlock == false){
+						res.purchase.resourceType.isBlock = true
+					}
+				}else if (params.actionId == '[transferred]'){
+					res.status = ResourceStatusEnum.TRANSFERRED
+				}else if (params.actionId == '[reAssigned]'){
+					res.status = ResourceStatusEnum.ALLOCATED	//reassigned current resource to another user
+					//set current user to new
+					if (params.reAssignedUserEid){
+						res.currentUser = User.findByUserBusinessInfo1(params.reAssignedUserEid)
+					}
+				}
+				def detail = "Update resource status from ["+oldStatus+"] to ["+res.status+"]"
+				if (params.actionComment){
+					detail +="; \n<strong>ActionComment :</strong> " + params.actionComment
+				}
+				if (params.actionId == '[reAssigned]'){
+					res.addToResourceLogs(new ResourceLog(status:res.status, dateCreated:new Date(), operateUser:user, assignedUser:res.currentUser, logdetail: detail))
+				}else{
+					res.addToResourceLogs(new ResourceLog(status:res.status, dateCreated:new Date(), operateUser:user, logdetail: detail))
+				}
+				if (!res.save(flush:true)){
+					flash.errorMessage = message(code:"resource.action.error", args:[params.actionId])
+					return
+				}
 			}
+			flash.actionMessage = message(code:"resource.action.msg", args:[resIdStatusArr.length,params.actionId])
 		}
 
 		//calculate current page's beginning index
@@ -474,9 +568,22 @@ class AdminController {
 				params.sortName = "displayedModel"	//default is sorted by id
 			}
 			def results = getQueryResources(params, eachPageCount, pageOffSet, params.sortName, params.orderName)
-			flash.resources = results
 			if (params.actionMsg){
 				flash.actionMessage=params.actionMsg
+			}
+			//send email message
+			def emailList =  params.findAll{
+				it.key.contains("emailAddress_")
+			}
+			def tos = null
+			if (emailList!=null && emailList.size()>0){
+				tos = new ArrayList<String>()
+				emailList.each {
+					tos.add(it.value)
+				}
+				if (tos != null && tos.size() > 0){
+					flash.actionMessage = "Resources have sent to emails " + tos + " successfully!"
+				}
 			}
 			//figure out page counts
 			def counts= 1
@@ -521,27 +628,28 @@ class AdminController {
 
 		if (params.subAction=='query'){
 			def content = params.queryContent
-			def sortInfo = params.sortParams
-			def orderInfo = params.orderParams
 
-
-			if (sortInfo==null || sortInfo==""){
-				sortInfo = "status"	//default sort
-				orderInfo = "asc"
+			if (!"desc".equals(params.orderParams)&&!"asc".equals(params.orderParams)){
+				params.orderParams = "asc"
 			}
-
-			log.debug 'sortInfo :' + sortInfo
-			log.debug 'orderInfo :' + orderInfo
-
+			if (params.sortParams==null || params.sortParams==""){
+				params.sortParams = "status"	//default is sorted by status
+			}
+			
+			def results
 			def criteria = User.createCriteria()
-			def results = criteria.list(max: eachPageCount, offset: pageOffSet, sort: sortInfo , order: orderInfo){
-				or {
-					ilike("userBusinessInfo1", "%" + content + "%")
-					ilike("userBusinessInfo2", "%" + content + "%")
-					ilike("userBusinessInfo3", "%" + content + "%")
-
-				}
+			if (params.userBusinessInfo1==null||"".equals(params.userBusinessInfo1)){
+				results = criteria.list(max: eachPageCount, offset: pageOffSet, sort: params.sortParams , order: params.orderParams){
+					or {
+						ilike("userBusinessInfo1", "%" + content + "%")
+						ilike("userBusinessInfo2", "%" + content + "%")
+						ilike("userBusinessInfo3", "%" + content + "%")}}
+			}else{
+				results = criteria.list(max: eachPageCount, offset: pageOffSet, sort: params.sortParams , order: params.orderParams){
+					
+						eq("userBusinessInfo1",  params.userBusinessInfo1)}
 			}
+			
 			log.debug 'Rendering  :'+ results
 			if(results ==null){
 				flash.totalCount =0
@@ -562,7 +670,8 @@ class AdminController {
 			if (!params.pageId){
 				params.pageId = 1
 			}
-			[userList:results,pageCounts:counts, currentPage: params.pageId, totalCounts:results.totalCount]
+			def locationList = Location.list()
+			[userList:results,pageCounts:counts, currentPage: params.pageId, totalCounts:results.totalCount,locationList:locationList]
 		}
 	}
 
@@ -573,26 +682,51 @@ class AdminController {
 			return
 		}
 
-		if (version != null) {
-			if (userInstance.version > version) {
-				userInstance.errors.rejectValue("version", "default.optimistic.locking.failure",
-						[
-							message(code: 'user.label', default: 'User')] as Object[],
-						"Another user has updated this User while you were editing")
-				return
-			}
-		}
-
 		userInstance.properties = params
 		if (userInstance.save(flush: true)) {
 			flash.message = message(code: 'flash.saveUserDetails.success', args: [userInstance.userBusinessInfo3])
+			if (userInstance.role == RoleEnum.PRIMARY_ADMIN && User.countByRole(userInstance.role) >1 ){
+				def user = User.findAllByRole(userInstance.role)
+				for (u in user){
+					if( u.userBusinessInfo1 != userInstance.userBusinessInfo1){
+						u.setRole(RoleEnum.USER)
+						u.save()
+					}
+				}
+			}
+			
+			if (userInstance.role == RoleEnum.RESOURCE_MANAGER && User.countByRole(userInstance.role) >1 ){
+				def user = User.findAllByRole(userInstance.role)
+				for (u in user){
+					if( u.userBusinessInfo1 != userInstance.userBusinessInfo1){
+						u.setRole(RoleEnum.USER)
+						u.save()
+					}
+				}
+			}
+			
 			return
 		}
 		
 		flash.error = message(code: 'flash.saveUserDetails.duplicate', args: [userInstance])
 	}
 
+	def saveAliasConfig(String id){
+		log.info params
+		def locationInstance = Location.get(id)
+		if (!locationInstance) {
+			return
+		}
 
+		locationInstance.properties = params
+		if (locationInstance.save(flush: true)) {
+			flash.info = message(code: 'flash.updateAliasConfig.success', args: [locationInstance.locationCode])
+			return
+		}
+		
+			flash.err = message(code: 'flash.updateAliasConfig.failure', args: [locationInstance])
+			log.debug 'Unable to update AliasConfig...'
+	}
 
 
 	private def getGridFs(){
@@ -616,19 +750,7 @@ class AdminController {
 		emailList.each {
 			tos.add(it.value)
 		}
-		def str = params.queryParams.toString()
-		str = str.substring(1, str.length()-2)
-		def strArr = str.split(',')
-		def newMap = new HashMap()
-		strArr.each {
-			def temp = it.split(':')
-			if (temp.length==2){
-				newMap.put(temp[0].trim(), temp[1].trim())
-			}else{
-				newMap.put(temp[0].trim(), null)
-			}
-		}
-		List<Resource> results = getQueryResources(newMap, 0, 0, "displayedModel", "desc")
+		List<Resource> results = getQueryResources(params, 0, 0, "displayedModel", "desc")
 
 		//create excel
 		def headers = [
@@ -659,32 +781,47 @@ class AdminController {
 			log.debug 'save emailResources ... '
 		}
 		//send email attached excel
-		mailService.sendMail {
-			multipart true
-			to tos
-			from SystemProperty.first().emailFrom
-			subject message(code: "email.resource.subject")
-			attach new File(path)
-			text message(code: "email.resource.text")
+		try{
+			mailService.sendMail {
+				multipart true
+				to tos
+				from SystemProperty.first().emailFrom
+				subject message(code: "email.resource.subject")
+				attach new File(path)
+				text message(code: "email.resource.text")
+			}
+		}catch(Exception e){
+			log.error "send email faild with exception: "+e
+			removeFileByPath(path)
 		}
+		removeFileByPath(path)
 		flash.args = [tos]
 		flash.resources = results
-		//render(view: "emailResources", model: [tos: tos])
 	}
 
+	def removeFileByPath(String filePath){
+		def file = new File(filePath)
+		if (file.exists()){
+			if (!file.delete()){
+				log.error "can not delete temp file: "+filePath
+			}
+		}
+	}
 
 	def selectedResources(){
 		flash.actionRes = null
-		def resList = params.checkedResource.toString().split(",");
-		def results = new ArrayList();
+		def resList = params.checkedResource.toString().split(",")
+		def results = new ArrayList()
+		def checkedResMap = new HashMap()
 		resList.each{
 			def res = Resource.get(it.toString())
 			results.add(res)
+			checkedResMap.put(res.id, res.status);
 		}
 		if (results.size() == 0){
 			results = null
 		}
-		flash.actionRes = results
+		flash.actionRes = checkedResMap
 		flash.args = [params.actionId]
 		[checkedResults: results]
 	}
@@ -729,42 +866,52 @@ class AdminController {
 			if (params.serialNr){
 				eq('serial',params.serialNr)
 			}
-			//by owner user email
-			if (params.userBusinessInfo2){
-				def curUser = User.findByUserBusinessInfo2(params.userBusinessInfo2)
-				if(curUser==null){
-					curUser = ""
+
+			//by owner
+			if (params.queryContent != null && params.queryContent != ""){
+				def curUsers = [""]
+				curUsers = User.createCriteria().list(){
+					if (params.queryResourceEid != null && params.queryResourceEid != ""){
+						//equal query: by owner EID
+						eq("userBusinessInfo1", params.queryResourceEid)
+					}else{
+						//like query: by owner Name
+						ilike("userBusinessInfo3", "%" + params.queryContent + "%")
+					}
 				}
-				eq('currentUser', curUser)
+				'in'('currentUser', curUsers)
 			}
 			//by purpose
 			if (params.purpose){
 				eq('purpose', params.purpose)
 			}
 			//by resource status
-			if (params.normalCode||params.allocatedCode||params.brokenCode||params.retiredCode||params.lostCode||params.returnedItioCode||params.transferredCode){
+			if ('on'.equals(params.normalCode)||'on'.equals(params.allocatedCode)||'on'.equals(params.brokenCode)||'on'.equals(params.retiredCode)||'on'.equals(params.lostCode)||'on'.equals(params.returnedItioCode)||'on'.equals(params.transferredCode)||'on'.equals(params.inQuestionCode)){
 				and{
 					or{
-						if (params.normalCode){
+						if (params.normalCode && params.normalCode.equals('on')){
 							eq('status',ResourceStatusEnum.NORMAL)
 						}
-						if (params.allocatedCode){
+						if (params.allocatedCode && params.allocatedCode.equals('on')){
 							eq('status',ResourceStatusEnum.ALLOCATED)
 						}
-						if (params.brokenCode){
+						if (params.brokenCode && params.brokenCode.equals('on')){
 							eq('status',ResourceStatusEnum.BROKEN)
 						}
-						if (params.retiredCode){
+						if (params.retiredCode && params.retiredCode.equals('on')){
 							eq('status',ResourceStatusEnum.RETIRED)
 						}
-						if (params.lostCode){
+						if (params.lostCode && params.lostCode.equals('on')){
 							eq('status',ResourceStatusEnum.LOST)
 						}
-						if (params.returnedItioCode){
+						if (params.returnedItioCode && params.returnedItioCode.equals('on')){
 							eq('status',ResourceStatusEnum.RETURNED_ITIO)
 						}
-						if (params.transferredCode){
+						if (params.transferredCode && params.transferredCode.equals('on')){
 							eq('status',ResourceStatusEnum.TRANSFERRED)
+						}
+						if (params.inQuestionCode && params.inQuestionCode.equals('on')){
+							eq('status',ResourceStatusEnum.IN_QUESTION)
 						}
 					}
 				}

@@ -53,68 +53,107 @@ class CommonController {
         [res_list:res_list, apply_list: applied_query.findAll() , transfer_list: transfer_query.findAll() ]
     }
 
+    def resourceDetail(){
+        log.info params
+        def user = session['user']
+        def res_id = params['res_id']
+        def res = Resource.get(res_id)
+        def transfer_query = Request.where {
+            submitUser==user && (status == RequestStatusEnum.NEW || status == RequestStatusEnum.WAITING_APPROVED) && requestType == RequestTypeEnum.TRANSFER
+        }
+        def transfer_req = transfer_query.findAll().find{
+            if(it.requestDetail.resource == res)
+                return true
+        }
+        render (view:"_resourceDetail.gsp",model:[res:res,transfer_req:transfer_req])
+    }
+
 
     def apply(){
 		log.info params
-        def user = session['user']
-        if(!user?.isAttached())
-            user.attach()
-        def each_req =  params.findAll{
-            it.key.contains("resourceType")
-        }
+        try{
+            def user = session['user']
+            if(!user?.isAttached())
+                user.attach()
+            def each_req =  params.findAll{
+                it.key.contains("resourceType")
+            }
 
-        each_req.each {
-            def matcher = (it.key =~ /resourceType_(\d+)/)
-            def type = ResourceType.get(it.value)
-            def quantity = Integer.valueOf(params['quantityNeed_'+matcher[0][1]])
-            
-            def detail = new ResourceApplyDetail(params)
-            detail.resourceType = type
-            detail.quantityNeed = quantity
-            def activity = new Activity(activityType:ActivityTypeEnum.APPLY,comment:params.comment,activityUser:user)
-            def req = new Request(submitUser:user ,status:RequestStatusEnum.NEW, requestType:RequestTypeEnum.APPLY, 
-                currentStep: 1, 
-                maxStep: SystemProperty.first().resourceApprovalWorkflow.stepCount, 
-                nextActionUserBusinessInfo1: SystemProperty.first().resourceApprovalWorkflow.workFlowStep[0].stepValue,
-                requestDetail: detail)
-            req.addToActivities(activity)
-            req.save()
-			log.debug 'save Request...'
-			
-			notificationService.requestNotification(req)
+            each_req.each {
+                def matcher = (it.key =~ /resourceType_(\d+)/)
+                def type = ResourceType.get(it.value)
+                def quantity = Integer.valueOf(params['quantityNeed_'+matcher[0][1]])
+                
+                def detail = new ResourceApplyDetail(params)
+                detail.resourceType = type
+                detail.quantityNeed = quantity
+                detail.resourceTypeUnitPriceInRmb = type?.latestUnitPriceInRmb
+                def activity = new Activity(activityType:ActivityTypeEnum.APPLY,comment:params.comment,activityUser:user)
+                def req = new Request(submitUser:user ,status:RequestStatusEnum.NEW, requestType:RequestTypeEnum.APPLY, 
+                    currentStep: 1, 
+                    requestDetail: detail)
+                req.addToActivities(activity)
+                
+                def approvalWorkFlow = getApprovalWorkFlow(req)
+                if (approvalWorkFlow.workFlowStep == null || approvalWorkFlow.workFlowStep.size() == 0) {
+                    req.nextActionUserBusinessInfo1 = "NA"
+                    req.status = RequestStatusEnum.WAITING_ALLOCATED
+                }else if(approvalWorkFlow.workFlowStep.size() != 0){
+                    def actionUserRole = approvalWorkFlow.workFlowStep[0].stepValue
+                    req.nextActionUserBusinessInfo1 = User.findByRole(actionUserRole).userBusinessInfo1
+                }
+
+                req.maxStep=approvalWorkFlow.stepCount
+
+                req.save()
+    			log.debug 'save Request...'
+    			
+    			notificationService.requestNotification(req)
+            }
+        }catch(Exception e){
+            log.error(e)
+        }finally{
+            redirect(action: "myResources")            
         }
-    }
+	}
 
     def transfer(){
 		log.info params
-        def user = session['user']
-		if(!user?.isAttached())
-			user.attach()
-        def res = Resource.get(params.resourceId)
-        def target_eid = params.userBusinessInfo1
+        try{
+            def user = session['user']
+    		if(!user?.isAttached())
+    			user.attach()
+            def res = Resource.get(params.resourceId)
+            def target_eid = params.userBusinessInfo1
 
-        def detail = new ResourceTransferDetail()
-        detail.resource = res
-		detail.comment = params.comment
-        detail.transferToUserBusinessInfo = target_eid
+            def detail = new ResourceTransferDetail()
+            detail.resource = res
+    		detail.comment = params.comment
+            detail.transferToUserBusinessInfo = target_eid
 
-        def activity = new Activity(activityType:ActivityTypeEnum.TRANSOUT,comment:params.comment,activityUser:user)
-        def req = new Request(submitUser:user ,status:RequestStatusEnum.NEW, requestType:RequestTypeEnum.TRANSFER, maxStep : 2, currentStep: 1 , nextActionUserBusinessInfo1:target_eid,
-            requestDetail:detail )
-        req.addToActivities(activity)
-        req.save()
-		log.debug 'save Request...'
-		
-		notificationService.requestNotification(req)
+            def activity = new Activity(activityType:ActivityTypeEnum.TRANSOUT,comment:params.comment,activityUser:user)
+            def req = new Request(submitUser:user ,status:RequestStatusEnum.NEW, requestType:RequestTypeEnum.TRANSFER, maxStep : 2, currentStep: 1 , nextActionUserBusinessInfo1:target_eid,
+                requestDetail:detail )
+            req.addToActivities(activity)
+            req.save()
+    		log.debug 'save Request...'
+    		
+    		notificationService.requestNotification(req)
+
+            render(status:200,text:"")
+        }catch(Exception e){
+            log.error(e)
+            render(status:500,text:message(code: 'flash.transfer.failure'))
+        }
+        //redirect(action: "myResources")
     }
 
     def myRequests(){
 		log.info params
         def user=session['user']
-        def openRequests = Request.where{(status in [
-                RequestStatusEnum.NEW,
-                RequestStatusEnum.WAITING_APPROVED,
-                RequestStatusEnum.WAITING_ALLOCATED
+        def openRequests = Request.where{!(status in [
+                RequestStatusEnum.CLOSED,
+                RequestStatusEnum.REJECTED
             ]) && (submitUser == user)}.list(sort:"dateCreated", order:"desc")
 
         def queryClosedReq = Request.where{(status in [
@@ -138,7 +177,8 @@ class CommonController {
         def openApprovals = Request.where{nextActionUserBusinessInfo1 == user.userBusinessInfo1}.list(
             offset:0, max:params.max, sort:"dateCreated", order:"asc")
 
-        [openApprovals:openApprovals]
+        def allOpenApprovals = Request.where{nextActionUserBusinessInfo1 == user.userBusinessInfo1}.list()
+        [openApprovals:openApprovals,allOpenApprovals:allOpenApprovals]
     }
 
     def approveRequest(){
@@ -158,33 +198,33 @@ class CommonController {
             req.addToActivities(activity)
             req.status=RequestStatusEnum.WAITING_APPROVED
             //3. Set the request.nextActionUserBusinessInfo1 to the next level manager/admin
-            def systemProperty = getSystemPropertyConfig(req)
-            def currentStepOperation = systemProperty.resourceApprovalWorkflow.workFlowStep[req.currentStep]
+            def approvalFlow = getApprovalWorkFlow(req)
+            def currentStepOperation = approvalFlow.workFlowStep[req.currentStep]
 
             
             if(!currentStepOperation)
             {
-                req.nextActionUserBusinessInfo1="N/A"
+                req.nextActionUserBusinessInfo1="NA"
                 req.status=RequestStatusEnum.WAITING_ALLOCATED
                 req.currentStep += 1
             }else
             {
-                if (currentStepOperation.stepType=="actionUserBusinessInfo1")
+                if (currentStepOperation.stepType=="actionUserRole")
                 {
-                    req.nextActionUserBusinessInfo1=currentStepOperation.stepValue
+                    req.nextActionUserBusinessInfo1=User.findByRole(currentStepOperation.stepValue).userBusinessInfo1
                     req.currentStep += 1
                 }else
                 {
                     def managerLevel = Integer.valueOf(currentStepOperation.stepValue)
                     def manager = getManagerInfo(req.submitUser, managerLevel.intValue())
                     if (manager==null) {
-                        if (systemProperty.identifier=="iridium") {
-                            req.nextActionUserBusinessInfo1="N/A"
-                            req.status=RequestStatusEnum.WAITING_ALLOCATED
-                            req.currentStep=systemProperty.resourceApprovalWorkflow?.stepCount-1
-                        }else if (systemProperty.identifier=="platinum") {
+                        if (approvalFlow.workFlowStep[approvalFlow.workFlowStep.size()-1].stepType=="actionUserRole") {
                             req.nextActionUserBusinessInfo1="00647651"
-                            req.currentStep=systemProperty.resourceApprovalWorkflow?.stepCount-2
+                            req.currentStep=approvalFlow.stepCount-2
+                        }else{
+                            req.nextActionUserBusinessInfo1="NA"
+                            req.status=RequestStatusEnum.WAITING_ALLOCATED
+                            req.currentStep=approvalFlow.stepCount-1
                         }
                     }else{
                         req.nextActionUserBusinessInfo1=manager?.userBusinessInfo1
@@ -278,23 +318,66 @@ class CommonController {
         }
     }
 
-    private def getSystemPropertyConfig(Request req){
-        def resourceType=req.requestDetail?.resourceType
-        def minPrice = Purchase.findByResourceType(resourceType)?.unitPrice
-        Purchase.findAllByResourceType(resourceType).each{
-            if (it.unitCurrency==CurrencyEnum.USD) {
-                it.unitPrice *= 6
-            }
-            if (it.unitPrice < minPrice) {
-                minPrice = it.unitPrice
+	def loadActiveResourceTypeByName(){
+        log.info params
+        def resourceTypeName = params.ResourceTypeName;
+		def query = ResourceType.createCriteria()
+		def resourceType_list = query.list() {
+			eq('resourceTypeName', resourceTypeName)
+			and{
+				or{
+					eq('isBlock',null)
+					eq('isBlock',false)
+				}
+			}
+		}
+		
+        render (view:"resourceTypeSelection",model:[resourceType_list:resourceType_list.sort(new java.util.Comparator<com.hp.it.cdc.robin.srm.domain.ResourceType>() {
+                                        public int compare(com.hp.it.cdc.robin.srm.domain.ResourceType lhs, com.hp.it.cdc.robin.srm.domain.ResourceType rhs) {
+                                            
+                                            def level1 = lhs.resourceTypeName.toLowerCase().compareTo(rhs.resourceTypeName.toLowerCase())
+                                            if (level1 != 0){
+                                                return level1
+                                            }else{
+                                                def level2 = (lhs.model.toLowerCase()).compareTo(rhs.model.toLowerCase())
+                                                if (level2 != 0){
+                                                    return level2
+                                                }else{
+                                                    
+                                                    return (lhs.supplier.toLowerCase()).compareTo(rhs.supplier.toLowerCase())
+                                                    
+                                                }
+                                            }
+                                        }
+                                })])
+    }
+
+    private def getApprovalWorkFlow(Request req){
+        def realPrice = req?.requestDetail?.resourceTypeUnitPriceInRmb
+        if (realPrice == null) {
+            realPrice = req?.requestDetail?.resourceType?.latestUnitPriceInRmb
+        }
+        return getFlow(realPrice)
+    }
+
+    private def getFlow(BigDecimal realPrice){
+        def price= realPrice==null?99999:realPrice
+        def systemProperty = SystemProperty.first()
+        def approvalWorkFlow 
+        def arrays  = systemProperty.resourceApprovalWorkflow
+        for(it in arrays) {
+            def range = it.range.split("-")
+            def minPrice = range[0].toBigDecimal() 
+            def maxPrice
+            if ( range.size() == 2 ) {   
+                maxPrice = range[1].toBigDecimal()
+                if (minPrice < price  && price <= maxPrice ){
+                    return it
+                }
+            }else if(minPrice < price && maxPrice == null){
+                return it
             }
         }
-        if (minPrice >= 6000) {
-            log.info "Use platinum system config, actionUser > Manager1 > Manager2 > actionUser "
-            return SystemProperty.findByIdentifier("platinum")
-        }
-        log.info "Use iridium system config, actionUser > Manager1 "
-        return SystemProperty.findByIdentifier("iridium")
     }
 
     private def getManagerInfo(User user, int managerLevel){

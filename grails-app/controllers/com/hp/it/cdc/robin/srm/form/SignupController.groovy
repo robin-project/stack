@@ -23,70 +23,53 @@ class SignupController {
 	
 	def authenticate(){
 		log.info params
-		String email = params.userBusinessInfo2 
+		String email = params.userBusinessInfo2.toLowerCase()
 		String password = params.password
 		
 		EmailValidator emailValidator = EmailValidator.getInstance()
 		if (!emailValidator.isValid(email)){
+			log.debug "email format is invalid."
 			flash.message = message(code: "email.verify.msg1")
-			redirect(uri:'/')
+			redirect(uri:'/signup/index')
 			return
 		}else{
 			if (!email.endsWith("@hp.com")){
+				log.debug "email format is not ends with @hp.com."
 				flash.message = message(code: "email.verify.msg2")
-				redirect(uri:'/')
+				redirect(uri:'/signup/index')
 				return
 			}
 		}
-		
-		def person = null
-		try{
-			person = getPersonSummaryFromLdap(email)
-		}catch(Exception e){
-			log.error e
-			flash.message = message(code: "email.verify.ldap")
-			redirect(uri:'/')
-			return
-		}
-		if (person == null){
-			flash.message = message(code: "email.verify.msg3", args: [email])
-			redirect(uri:'/')
-			return
-		}
 		if (password==null ||password.trim().length()<6){
+			log.debug "password format is invalid."
 			flash.message = message(code: "password.verify.msg")
 			redirect(uri:'/signup/index')
-			return;
+			return
 		}
 		
 		//check verification code
 		if (!jcaptchaService.validateResponse("imageCaptcha", session.id, params.captchaResponse))
 		{
+			log.debug "verify code is invalid."
 			flash.message = message(code: "code.verify.msg")
-			redirect(uri:'/')
-			return;
+			redirect(uri:'/signup/index')
+			return
 		}
 		
 		//find if the user exists
 		def user = User.findByUserBusinessInfo2(email)
 		//create or update user by email and password
 		if (user == null){
-			user = new User()
-			user.password = password.trim()
-			user.userBusinessInfo2 = email
-			user.status = UserStatusEnum.INACTIVE
-			user.role = RoleEnum.USER
+			log.debug "user is not existed!"
+			flash.message = message(code: "email.not.exist.msg")
+			redirect(uri:'/signup/index')
+			return
 		}
-		//if EID and FullName is the same as LDAP, mark the last validated time to now
-		if (person.employeeNr.equals(user.userBusinessInfo1) && person.fullName.equals(user.userBusinessInfo3)){
-			user.lastValidateTs = new Date()
-		}else{
-			//update EID and fullName if not same as LDAP
-			user.userBusinessInfo1 = person.employeeNr
-			user.userBusinessInfo3 = person.fullName
-		}
-		if (!user.save(flush:true)){
-			throw new IllegalArgumentException( "Unable to save User.....")
+		if (user.status.equals(UserStatusEnum.REMOVED)){
+			log.debug "user status is removed!"
+			flash.message = message(code: 'email.not.exist.msg')
+			redirect(uri:'/signup/index')
+			return
 		}
 		// Send email confirmation
 		def pendPwd = springSecurityService.encodePassword(password.trim())
@@ -105,6 +88,7 @@ class SignupController {
 		}
 		flash.message = email
 		if (pending == null){
+			log.debug "send confirmation email to "+email+" is faild!"
 			redirect(uri:'/reactivate/reactivate_failure')
 			return
 		}
@@ -112,16 +96,5 @@ class SignupController {
 	}
 	
 	def count_down(){
-	}
-	
-	def static getPersonSummaryFromLdap(String email){
-		ILdapLookupService ladp = new LdapLookupService()
-		def person = null
-		try{
-			person = ladp.getPersonSummaryByEmail(email)
-		}catch(Exception e){
-			return null
-		}
-		return person
 	}
 }

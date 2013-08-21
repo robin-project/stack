@@ -23,10 +23,10 @@
 				</div>
 				<div align="center" class="span10 well-small">
 					<div class="span6">
-						<g:submitToRemote url="[action:'index',controller:'reactivate']" class="btn btn-danger" value="${message(code: 'reactivate.failure.btn.retry', default: 'Retry activation')}" update="SRM_COMMON_MAIN_BODY_CONTENT"/>
+						<a href="/stack/signup" class="btn btn-danger"><g:message code="reactivate.failure.btn.retry"/></a>
 					</div>
 					<div>
-						<g:submitToRemote class="btn btn-default" url="[action:'index',controller:'signup']" value="${message(code:'reactivate.failure.btn.gohome', default:'Go home') }" update="SRM_COMMON_MAIN_BODY_CONTENT"></g:submitToRemote>
+						<g:link class="btn btn-default" uri="/"><g:message code="reactivate.failure.btn.gohome"/></g:link>
 					</div>
 				</div>
 			</div>

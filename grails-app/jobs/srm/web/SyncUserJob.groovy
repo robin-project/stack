@@ -10,8 +10,8 @@ class SyncUserJob {
 	def concurrent =false
 	transient validateUserService
     static triggers = {
-         //simple startDelay:1000*60*3, repeatInterval: 1000*60*60*4, repeatCount: 0 
-         cron cronExpression: '* * 8/12 * * ?' 
+         //simple startDelay:1000*60*1, repeatInterval: 1000*60*60*4, repeatCount: 0 
+         cron cronExpression: '* * 8/4 * * ?' 
     }
 
 	def execute() {

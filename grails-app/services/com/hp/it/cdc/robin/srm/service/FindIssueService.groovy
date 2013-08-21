@@ -12,11 +12,11 @@ class FindIssueService {
     def service() {
 		cleanExistingIssues()
 		findIsolatedResources()
-		findActiveUserHavingNoResource()
+		//findActiveUserHavingNoResource()
     }
 	
 	def cleanExistingIssues(){
-		Issue.where{}.deleteAll()
+		Issue.deleteAll()
 	}
 	def findActiveUserHavingNoResource(){
 		log.info "=======================Find active user having no resource======================="

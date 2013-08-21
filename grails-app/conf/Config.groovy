@@ -47,8 +47,6 @@ grails.scaffolding.templates.domainSuffix = 'Instance'
 
 // Set to false to use the new Grails 1.2 JSONBuilder in the render method
 grails.json.legacy.builder = false
-// enabled native2ascii conversion of i18n properties files
-grails.enable.native2ascii = true
 // packages to include in Spring bean scanning
 grails.spring.bean.packages = []
 // whether to disable processing of multi part requests
@@ -68,7 +66,7 @@ plugin.platformCore.organization.name="HP-IT DS/CDC Operation Team"
 
 //AVATAR
 avatarPlugin {
-	defaultGravatarUrl="""https://i2.wp.com/a248.e.akamai.net/assets.github.com/images/gravatars/gravatar-user-420.png?ssl=1"""
+	defaultGravatarUrl="""https://raw.github.com/robin-hp/stack/master/web-app/images/defaultAvatar.jpg"""
 	gravatarRating="G"
 }
 
@@ -107,7 +105,7 @@ environments {
 	}
 	production {
 		grails.logging.jul.usebridge = false
-		grails.serverURL = "http://cdc-operation-aries.asiapacific.hpqcorp.net:9087/stack"
+		grails.serverURL = "http://cdc-operation-aries.asiapacific.hpqcorp.net/stack"
 		grails.serverSecureURL = "https://cdc-operation-aries.asiapacific.hpqcorp.net:8443/stack"
 		cacertpath="/opt/apache-tomcat-6.0.36/ssl/hpca.crt"
 		mongo {

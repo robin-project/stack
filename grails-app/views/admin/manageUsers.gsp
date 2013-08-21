@@ -6,6 +6,9 @@ function hideModal(id){
 
 $(document).ready(function() {
 	$("#user_lookup").addClass("span9");
+	$("#user_lookup-userBusinessInfo1").on("change",function(){
+		$("input[name='Find user']").click();
+	})
 
 	//go to page
    	$("#gotoPageId").focusout(function(e){
@@ -56,23 +59,24 @@ function getPageRecords(pageId, maxPage, type){
 			return;
 		}
 	}
-	var sortName = getSortName();
-	callQueryUsers(curNum, maxNum, queryParams + "&sortParams=" + sortName);
+	var sortName = $("#sortNameId").val();
+	var orderName = $("#orderNameId").val();
+	callQueryUsers(curNum, maxNum, queryParams + "&sortParams=" + sortName + "&orderParams=" + orderName);
 }
 
 function sortTable(sortParams, curNum, maxNum){
+	$("#sortNameId").remove();
 	$("#sortNameId").attr("value", sortParams);
+	
 	var orderParams = "desc";
 	if ("${params.sortParams}"==sortParams){
 		if ("${params.orderParams}"=='desc'){
 			orderParams = "asc";
 		}
 	}
+	$("#orderNameId").remove();
+	$("#orderNameId").attr("value", orderParams);
 	callQueryUsers(curNum, maxNum, queryParams +"&sortParams="+sortParams+"&orderParams="+orderParams);
-}
-
-function getSortName(){
-	return $("#sortNameId").val();
 }
 
 </script>
@@ -96,7 +100,9 @@ function getSortName(){
 			update="SRM-BODY-CONTENT">
 			
 			<div>
-				<g:render contextPath="../query" template="formQueryUsers"/>
+				<g:render contextPath="../query" template="formQueryUsers"  model="['formId':"user_lookup"]"/>
+				<input type="hidden" name="sortName" id="sortNameId"  value="${params.sortParams}" />
+				<input type="hidden" name="orderName" id="orderNameId"  value="${params.orderParams}" />
 				<g:submitButton name="Find user"
 								value="${message(code: 'button.label.finduser', default: 'Find user')}"
 								class="btn btn-primary span2" style="vertical-align:top"/>
@@ -106,8 +112,11 @@ function getSortName(){
 		<!--Query Users End-->
 		<g:if test="${flash.totalCount !=null && flash.totalCount!=''}">
 		<div>
-			${flash.totalCount}
-			<g:message code="users.query.results" default="results found" />
+			<p>
+				<strong>Total : </strong>
+				${flash.totalCount}
+				<g:message code="users.query.results" default="results found" />
+			</p>
 		</div>
 		
 		<!--Results Found Start-->
@@ -115,11 +124,23 @@ function getSortName(){
 			<table class="table table-bordered table-striped">
 				<thead>
 					<tr>
-						<th><a href="javascript:sortTable('userBusinessInfo3', ${currentPage },${pageCounts })" >${message(code: 'users.name.label', default: 'Name')}</a></th>
-						<th><a href="javascript:sortTable('userBusinessInfo2', ${currentPage },${pageCounts })">${message(code: 'users.email.label', default: 'Email')}</a></th>
-						<th><a href="javascript:sortTable('userBusinessInfo1', ${currentPage },${pageCounts })">${message(code: 'users.eid.label', default: 'EID')}</a></th>
-						<th><a href="javascript:sortTable('status', ${currentPage },${pageCounts })">${message(code: 'users.status.label', default: 'Status')}</a></th>
-						<th><a href="javascript:sortTable('role', ${currentPage },${pageCounts })">${message(code: 'users.role.label', default: 'Status')}</a></th>
+						<th><a href="javascript:sortTable('userBusinessInfo3', ${currentPage },${pageCounts })" >${message(code: 'users.name.label', default: 'Name')}</a>
+						<g:if test="${params.orderParams=='desc'&&params.sortParams=='userBusinessInfo3'}"><i class="icon-chevron-down"></i></g:if><g:elseif test="${params.orderParams=='asc'&&params.sortParams=='userBusinessInfo3'}"><i class="icon-chevron-up"></i></g:elseif></th>
+						<th><a href="javascript:sortTable('userBusinessInfo2', ${currentPage },${pageCounts })">${message(code: 'users.email.label', default: 'Email')}</a>
+						<g:if test="${params.orderParams=='desc'&&params.sortParams=='userBusinessInfo2'}"><i class="icon-chevron-down"></i></g:if><g:elseif test="${params.orderParams=='asc'&&params.sortParams=='userBusinessInfo2'}"><i class="icon-chevron-up"></i></g:elseif></th>
+						<th><a href="javascript:sortTable('userBusinessInfo1', ${currentPage },${pageCounts })">${message(code: 'users.eid.label', default: 'EID')}</a>
+						<g:if test="${params.orderParams=='desc'&&params.sortParams=='userBusinessInfo1'}"><i class="icon-chevron-down"></i></g:if><g:elseif test="${params.orderParams=='asc'&&params.sortParams=='userBusinessInfo1'}"><i class="icon-chevron-up"></i></g:elseif></th>
+						<th><a href="javascript:sortTable('userBusinessInfo4', ${currentPage },${pageCounts })">${message(code: 'users.empType.label', default: 'Emp Type')}</a>
+						<g:if test="${params.orderParams=='desc'&&params.sortParams=='userBusinessInfo4'}"><i class="icon-chevron-down"></i></g:if><g:elseif test="${params.orderParams=='asc'&&params.sortParams=='userBusinessInfo4'}"><i class="icon-chevron-up"></i></g:elseif></th>
+						<th><a href="javascript:sortTable('manager', ${currentPage },${pageCounts })">${message(code: 'users.manager.label', default: 'Manager')}</a>
+						<g:if test="${params.orderParams=='desc'&&params.sortParams=='manager'}"><i class="icon-chevron-down"></i></g:if><g:elseif test="${params.orderParams=='asc'&&params.sortParams=='manager'}"><i class="icon-chevron-up"></i></g:elseif></th>
+						<th><a href="#aliasConfig" data-toggle="modal" class="btn btn-mini"><i class="icon-tasks"></i></a><a href="javascript:sortTable('userBusinessInfo5', ${currentPage },${pageCounts })">${message(code: 'users.location.label', default: 'Location')}</a>
+						<g:if test="${params.orderParams=='desc'&&params.sortParams=='userBusinessInfo5'}"><i class="icon-chevron-down"></i></g:if><g:elseif test="${params.orderParams=='asc'&&params.sortParams=='userBusinessInfo5'}"><i class="icon-chevron-up"></i></g:elseif>	
+						</th>
+						<th><a href="javascript:sortTable('status', ${currentPage },${pageCounts })">${message(code: 'users.status.label', default: 'Status')}</a>
+						<g:if test="${params.orderParams=='desc'&&params.sortParams=='status'}"><i class="icon-chevron-down"></i></g:if><g:elseif test="${params.orderParams=='asc'&&params.sortParams=='status'}"><i class="icon-chevron-up"></i></g:elseif></th>
+						<th><a href="javascript:sortTable('role', ${currentPage },${pageCounts })">${message(code: 'users.role.label', default: 'Role')}</a>
+						<g:if test="${params.orderParams=='desc'&&params.sortParams=='role'}"><i class="icon-chevron-down"></i></g:if><g:elseif test="${params.orderParams=='asc'&&params.sortParams=='role'}"><i class="icon-chevron-up"></i></g:elseif></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -141,14 +162,6 @@ function getSortName(){
 		  		<li id="PAGE_FIRST"><a href="javascript:getPageRecords(1, ${pageCounts}, 'Cur')">First</a></li>
 		  		<li id="PAGE_PREV"><a href="javascript:getPageRecords(${currentPage }, ${pageCounts}, 'Prev')">Prev</a></li>
 		  	</g:else>
-		    <%--<g:each var="i" in="${ (0..<pageCounts) }">
-		    	<g:if test="${currentPage==1 && i==0 }">
-				    <li id="PAGE_${i+1}" class="active"><a href="javascript:getPageRecords(${i+1}, ${pageCounts}, 'Cur')">${i+1 }</a></li>
-			  	</g:if>
-			  	<g:else>
-			    	<li id="PAGE_${i+1}"><a href="javascript:getPageRecords(${i+1}, ${pageCounts}, 'Cur')">${i+1 }</a></li>
-			  	</g:else>
-		    </g:each>--%>
 		     <li><a>Page ${currentPage } of ${pageCounts}</a></li>
 		    <g:if test="${currentPage==pageCounts }">
 			    <li id="PAGE_NEXT" class="disabled"><a href="javascript:getPageRecords(${currentPage }, ${pageCounts}, 'Next')">Next</a></li>
@@ -167,3 +180,5 @@ function getSortName(){
 <!-- Modal render-->
 <g:render template="formShowUserDetails"
 	collection="${userList}" />
+<g:render template="formAliasConfig"
+	collection="${locationList}" />

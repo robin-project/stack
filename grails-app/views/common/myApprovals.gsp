@@ -2,12 +2,25 @@
 $('#Approval-Tab a:first').tab('show');
 $('.alert.alert-success').fadeOut(5000);
 
-function loading(){
-   // $("#loading-indicator").show();
+function acceptSuccess(){
+    approveSuccess();
+    var count =parseInt($("#dashboard-numbers :last").html()) - 1;
+    if(count < 0)
+    {
+        $("#dashboard-numbers :last").html(0);
+    }else{
+        $("#dashboard-numbers :last").html(count);    
+    }
 }
 
-function loadingDone(){
-   // $("#loading-indicator").hide();
+function approveSuccess(){
+   var count = parseInt($("#tab_alert_approval_number").html())-1;
+   if (count < 0) {
+        $("#tab_alert_approval_number").html(0);
+   }else{
+        $("#tab_alert_approval_number").html(count); 
+   }
+   
 }
 
 function loadingMoreApprovals(){
@@ -50,12 +63,6 @@ function loadingMoreApprovals(){
                             ${flash.message}
                         </div>
                     </g:if>
-                    <g:if test="${flash.error}">
-                        <div class="alert alert-error">
-                            <button type="button" class="close" data-dismiss="alert">&times;</button>
-                            ${flash.error}
-                        </div>
-                    </g:if>
                     <div class="alert alert-info">
                         <button type="button" class="close" data-dismiss="alert">&times;</button>
                         <g:message code="no.open.approval"/>
@@ -68,7 +75,13 @@ function loadingMoreApprovals(){
                                 <g:render template="/common/approvalTab" model="[openApprovals:openApprovals]"/>
                                 <input type="hidden" id="offsetInput" value="1">
                             </ul>
-                            <div class="pagination ajax_paginate"><a href="javascript:void(0)" onclick="loadingMoreApprovals()"><g:message code="default.paginate.more"/></a></div>
+                            <g:if test="${allOpenApprovals?.size() > 15}">
+                                <div class="pagination ajax_paginate">
+                                    <a href="javascript:void(0)" onclick="loadingMoreApprovals()">
+                                        <g:message code="default.paginate.more"/>
+                                    </a>
+                                </div>
+                            </g:if>
                         </div>
                     </div>
                     <div class="span9">
@@ -76,6 +89,12 @@ function loadingMoreApprovals(){
                             <div class="alert alert-success" role="status">
                                 <button type="button" class="close" data-dismiss="alert">&times;</button>
                                 ${flash.message}
+                            </div>
+                        </g:if>
+                        <g:if test="${flash.error}">
+                            <div class="alert alert-error">
+                                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                                ${flash.error}
                             </div>
                         </g:if>
                         <div class="tab-content" id="Approval-Content">

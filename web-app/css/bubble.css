@@ -46,10 +46,10 @@
 	content: "";
 	position: absolute;
 	top: 10px;
-	left: -15px;
+	left: -10px;
 	border-style: solid;
 	border-left: 20px;
-	border-width: 9px 15px 9px 0;
+	border-width: 9px 10px 9px 0;
 	border-color: transparent #eaeaea;
 	display: block;
 	width: 0;

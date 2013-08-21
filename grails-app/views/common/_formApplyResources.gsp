@@ -12,12 +12,14 @@
 							$('#applyResources').modal('hide');
 			            	$('#SRM-BODY-CONTENT').html(data);
 			            	$('#TAB-20001 > a').click();
+			            	refreshNumber();
 		                }  
 			     });
 				}
 			}  
 		});
 	}
+
 	$(document).ready(function(){
 				var cursor = 1
 				var resource_type_html = $("#app_res").html()
@@ -26,7 +28,9 @@
 					function() {
 						cursor++
 						$("#app_res").append(	
-							resource_type_html.replace(/resourceType_\d+/g,"resourceType_" + cursor)
+							resource_type_html
+								.replace(/type_\d+/g,"type_" + cursor)
+								.replace(/resourceType_\d+/g,"resourceType_" + cursor)
 								.replace(/quantityNeed_\d+/g,"quantityNeed_" + cursor));
 				});
 
@@ -34,7 +38,35 @@
 				$("#app_res").on("click", ".btn", function() {
 					$(this).parent().remove()
 				});
-				
+
+				/*$("#app_res").on("change",".resourceTypeSelection",function() {
+					var resourceTypeSelection = $(this)
+					var typeChoice = this.value
+					console.log(this.name +"  " + this.value)
+					$.map( $("option",resourceTypeSelection.siblings(".detailSelection")) , 
+						function(option){
+							if($(option).html() == "---Resource---")
+								return
+							if($(option).attr('data-filter-one').indexOf(typeChoice) > -1){
+								$(option).css('display','')
+							}else{
+								$(option).css('display','none')
+							}
+						}
+					)
+				})*/
+
+				$("#app_res").on("change",".resourceTypeSelection",function() {
+					var resourceTypeSelection = $(this)		
+					$.ajax({
+						url:'loadActiveResourceTypeByName',
+						data: "ResourceTypeName=" + this.value + "&selectionName="+this.name, 
+						complete: function(html) {
+							resourceTypeSelection.siblings(".detailSelection").html(html.responseText);
+						}
+		     		});
+				});
+
 		//form validation
 		validateApplyForm();
 	});
@@ -66,11 +98,17 @@
 					<!-- Resources -->
 					<div id="app_res">
 						<div class="control-group">
-							<g:select name="resourceType_1" class="validate[required]"
-								from="${com.hp.it.cdc.robin.srm.domain.ResourceType.list()}"
-								optionKey="id"
-								noSelection="['':'---Choose Resource Type---']"
-								style="width:75%" />
+							<g:select name="type_1" class="resourceTypeSelection validate[required]"
+								from="${com.hp.it.cdc.robin.srm.domain.ResourceType.findAllByIsBlockIsNullOrIsBlock(false).resourceTypeName.unique().sort(new java.util.Comparator<String>() {
+ 										public int compare(String lhs, String rhs) {
+    									   return lhs.toLowerCase().compareTo(rhs.toLowerCase())
+  										}
+								})}"
+								noSelection="['':'--Category--']"
+								style="width:25%" />
+							<select name="resourceType_1" class="detailSelection validate[required]" style="width:50%" id="resourceType_1">
+								<option value="">---Choose resource category---</option>
+							</select>
 							<g:field class="validate[required, min[1]]" type="number" name="quantityNeed_1" value="1"
 								style="width:10%" />
 							<button type="button" class="btn btn-small">

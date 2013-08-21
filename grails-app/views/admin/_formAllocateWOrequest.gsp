@@ -12,36 +12,46 @@
 		</div>
 		<div class="modal-body">
 			<div id="create-resourceType" class="content span12" role="main">
+
 				<div class="row-fluid">
 					<div class="row-fluid">
-						<div class="span12">
-							<g:formRemote name="userQueryForm"
-								url="[action:'manageUsers',controller:'admin']"
-								update="SRM-BODY-CONTENT">
-								<g:render contextPath="../query" template="formQueryUsers" />
-							</g:formRemote>
-							<g:select name="purpose" id="purpose"
+						<div class="input-prepend">
+		  					<span class="add-on">To:</span>
+							<g:render contextPath="../query" template="formQueryUsers"  model="['formId':"user_lookup"]"/>
+						</div>
+						<g:select name="purpose" id="purpose"
 							from="${com.hp.it.cdc.robin.srm.constant.PurposeEnum?.values()}"
 							keys="${com.hp.it.cdc.robin.srm.constant.PurposeEnum.values()*.name()}" />
-						</div>
 					</div>
 					
 					<div class="well">
-					<div id="demand">
-						<div class="control-group">
-							<g:select class="resourceTypeSelection validate[required]" name="resourceType_1"
-								from="${com.hp.it.cdc.robin.srm.domain.ResourceType.list()}"
-								optionKey="id" noSelection="['':' ']" 
-								style="width:60%" />
-							<span class="serialSelection" style="width:30%">
-								<g:select class="validate[required]" name="serialNr_1" style="width:30%"
-								 from="${serials}"/>
-							</span>
-							<button type="button" class="btn btn-small" style="vertical-align: top;">
-								<i class="icon-minus"></i>
-							</button>
+						<div id="demand">
+							<div class="control-group">
+								<g:select class="resourceTypeSelection validate[required]" name="resourceType_1"
+									from="${com.hp.it.cdc.robin.srm.domain.ResourceType.list().sort(new java.util.Comparator<com.hp.it.cdc.robin.srm.domain.ResourceType>() {
+ 										public int compare(com.hp.it.cdc.robin.srm.domain.ResourceType lhs, com.hp.it.cdc.robin.srm.domain.ResourceType rhs) {
+    									    int level1 = lhs.resourceTypeName.toLowerCase().compareTo(rhs.resourceTypeName.toLowerCase())
+  											if (level1 != 0){
+  												return level1
+  											}else{
+  												int level2 = (lhs.model.toLowerCase()).compareTo(rhs.model.toLowerCase())
+  												if (level2 != 0){
+  													return level2
+  												}else{
+  													return (lhs.supplier.toLowerCase()).compareTo(rhs.supplier.toLowerCase())
+  									
+  												}
+  											}
+  										}
+								})}"
+									optionKey="id" noSelection="['':' ']"/>
+								<g:select class="serialSelection validate[required]" name="serialNr_1" style="width:30%"
+									 from="${serials}"/>
+								<button type="button" class="btn btn-small" style="vertical-align: top;">
+									<i class="icon-minus"></i>
+								</button>
+							</div>
 						</div>
-					</div>
 					<div>
 						<button type="button" class="btn btn-small">
 							<i class="icon-plus"></i>
@@ -77,9 +87,9 @@
 						url:'<g:createLink action="demand"/>',  
 						type:'POST',
 						data:$("#allocateForm").serialize(),
-						async: false,
-						complete:function(data){
+						success:function(data){
 							$('#allocateWOrequest').modal('hide');
+							$('#SRM-BODY-CONTENT').html(data);
 		                }  
 			     });
 				}
@@ -111,8 +121,8 @@
 						url:'loadNormalSerials',
 						data: "typeId=" + this.value + "&selectionName="+this.name, 
 						cache: false,
-						success: function(html) {
-							resourceTypeSelection.siblings(".serialSelection").html(html);
+						complete: function(html) {
+							resourceTypeSelection.siblings(".serialSelection").html(html.responseText);
 						}
 		     		});
 				});

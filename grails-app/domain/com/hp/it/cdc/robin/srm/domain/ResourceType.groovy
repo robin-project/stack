@@ -6,6 +6,9 @@ class ResourceType {
 	String supplier
 	String model
 	String productNr
+	Boolean isBlock
+	BigDecimal latestUnitPriceInRmb
+
 	List<String> pictureNames=new ArrayList<String>()
 
 	Date dateCreated
@@ -15,6 +18,8 @@ class ResourceType {
 		supplier nullable:false, blank:false, size:1..50
 		model nullable:false, blank:false,  size:1..50
 		productNr nullable:true, blank:true
+		isBlock nullable:true
+		latestUnitPriceInRmb nullable:true
 	}
 	//	static embedded = [
 	//		'pictureNames'
@@ -26,6 +31,7 @@ class ResourceType {
 	}
 	
 	String toRequestString(){
-		return resourceTypeName+ " ("+ supplier +")" + " " + model 
+		return resourceTypeName + " " + model + " ("+ supplier +")"
 	}
+
 }

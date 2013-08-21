@@ -4,18 +4,16 @@ import org.bson.types.ObjectId
 
 class SystemProperty {
 	ObjectId id
-	String identifier
-	String logoImageUrl
-	String faviconUrl
-	ResourceApprovalWorkflow resourceApprovalWorkflow
+	List<ResourceApprovalWorkflow> resourceApprovalWorkflow
 	String treelevelTopUserBusinessInfo1
-	String systemAdminUserBusinessInfo1
 	Integer userStaleDays
 	String emailFrom
 	Integer eachResourcePageCount
+    String userGuideUrl
+    Boolean productionMode
     
     static embedded=['resourceApprovalWorkflow']
     static constraints = {
-    	identifier nullable:false, unique:true
+    	productionMode nullable:true
     }
 }
