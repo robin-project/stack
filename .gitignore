@@ -1,0 +1,7 @@
+#folder
+.settings
+target
+
+#file
+.classpath
+.project
