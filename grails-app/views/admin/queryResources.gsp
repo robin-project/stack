@@ -82,7 +82,7 @@
 			type:"${params.type}",serialNr:"${params.serialNr}",supplier:"${params.supplier}", model:"${params.model}",purpose:"${params.purpose}",productNr:"${params.productNr}",
 			normalCode:"${params.normalCode}",allocatedCode:"${params.allocatedCode}",brokenCode:"${params.brokenCode}",retiredCode:"${params.retiredCode}",
 			lostCode:"${params.lostCode}",returnedItioCode:"${params.returnedItioCode}",transferredCode:"${params.transferredCode}",inQuestionCode:"${params.inQuestionCode}",
-			arriveDate_day:"${params.arriveDate_day}", arriveDateType:"${params.arriveDateType}",arriveDate_month:"${params.arriveDate_month}",arriveDate_year:"${params.arriveDate_year}",arriveDateValue:"${flash.arriveDateValue}"])}";
+			arriveDate_day:"${params.arriveDate_day}", arriveDateType:"${params.arriveDateType}",arriveDate_month:"${params.arriveDate_month}",arriveDate_year:"${params.arriveDate_year}",arriveDateValue:"${flash.arriveDateValue}",ownerCascade:"${params.ownerCascade}"])}";
 	}
 
 	function sortTable(sortProp, currPage, pages){
@@ -166,14 +166,14 @@
 	}
 
 	function closeComment(){
-		$('.table td i').popover('hide');
+		$('.table td i.icon-comment').popover('hide');
 	}
 
 	//get the resource's log comment
 	var actionId = null;
 	$(document).ready(function(){
 		//popup the resource comments
-    	$('.table td i').on('click', function (e){
+    	$('.table td i.icon-comment').on('click', function (e){
         	var resId = this.id;
         	var logInputs = $("#model-"+resId).find("input");
         	var commentTrs = "<thead><tr class='odd'><th><g:message code='comment.popover.operateUser.head'/></th><th><g:message code='comment.popover.logStatus.head'/></th><th><g:message code='comment.popover.assignedUser.head'/></th><th><g:message code='comment.popover.logDetail.head'/></th><th><g:message code='comment.popover.logDate.head'/></th></tr><thead><tbody>";
@@ -183,10 +183,10 @@
             }
         	commentTrs = commentTrs + "</tbody>";
         	$(this).attr("data-content", commentTrs);
-        	$('.table td i').not(this).popover('hide');
+        	$('.table td i.icon-comment').not(this).popover('hide');
     	});
 
-    	$('.table td i').popover({
+    	$('.table td i.icon-comment').popover({
     		html:'true',
   			placement: 'right',
   			title:'<div class="span11"><strong>Comment Details</strong></div><a href="javascript:closeComment()"><i class="icon-off"></i></a>'

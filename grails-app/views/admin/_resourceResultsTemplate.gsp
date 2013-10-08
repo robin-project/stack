@@ -3,6 +3,24 @@
 	max-width: 800px;
 }	
 </style>
+<script>
+$("input.serial").focus(function() {
+	  $(this).attr('readonly',false);
+	});
+
+$("input.serial").focusout(function() {
+	 $(this).attr('readonly',true);
+	 var serial=this.value;
+	 $.ajax({
+			url:'serialConfig',
+			data: "id=" + this.id +"&serial="+serial,
+			cache: false,
+			success: function(data,textStatus){
+				$('#QUERY_RESULT_ID').html(data);
+			}
+		});
+	});
+</script>
 <div>
 	<p>
 		<strong>Total : </strong>
@@ -54,17 +72,17 @@
 					<td id="model-${res.id }">
 						${res.displayedModel}
 						<a href="###"><i id="${res.id }" class="icon-comment"  data-toggle="popover"></i></a>
-						
 						<g:each in="${res.resourceLogs}" status="k" var="resLog">
-							<input type="hidden" name="${res.id}-${resLog}" value="${resLog.operateUser.userBusinessInfo2 } ## ${resLog.status } ## ${resLog.logdetail } ## 
-							<%
+							<input type="hidden" name="${res.id}-${resLog}"
+								value="${resLog.operateUser.userBusinessInfo2 } ## ${resLog.status } ## ${resLog.logdetail } ## 
+							<%	
 								if (resLog.dateCreated!=null){
 									%><g:formatDate format="yyyy-MM-dd" date="${resLog.dateCreated}"/><%
 								}else{
 									%><%
 								}
 							%>
-							## 
+							##
 							<%
 								if (resLog.assignedUser!=null){
 									%>${resLog.assignedUser.userBusinessInfo2}<%
@@ -78,7 +96,7 @@
 						${res.displayedProductNr}
 					</td>
 					<td>
-						${res.serial}
+						<g:textField name="serial" class="serial input-small" id="${res.id}" readonly="true"  value="${res?.serial}"/>
 					</td>
 					<td><g:message code='${res.status.labelCode}' /></td>
 					<td>

@@ -27,7 +27,7 @@ class User implements Serializable{
     static constraints = {
 		manager nullable:true
 		userBusinessInfo1 matches: "[0-9]+", unique:true
-		userBusinessInfo2 email:true, unique:true
+		userBusinessInfo2 email:true
 		userApprovalPreferences nullable:true
 		password nullable:true, minLenght: 6, matches: /^[\d\p{L}]*$/
 		userBusinessInfo4 nullable:true

@@ -1,7 +1,7 @@
 <%@ page import="com.hp.it.cdc.robin.srm.constant.*" %>
 <%@ page import="com.hp.it.cdc.robin.srm.domain.*" %>
 
-<div id="RESOURCE_CONDITION_ID" class="row-fluid span12">
+<div id="RESOURCE_CONDITION_ID" class="row-fluid">
 	<!-- left -->
 	<div class="row-fluid span5">
 		<div class="row-fluid">
@@ -22,17 +22,18 @@
 		</div>
 		<div class="row-fluid">
 			<label class="span3"><g:message code="admin.query.serial.label"/></label>
-			<g:textField name="serialNr" value="${params.serialNr}"/>
+			<g:textArea name="serialNr" value="${params.serialNr}"/>
 			<input type="hidden" name="sortName" id="sortNameId"  value="${params.sortName}" />
 		</div>
 	</div>
 	
 	<!-- rights -->
-	<div class="row-fluid span5">
+	<div class="row-fluid span7">
 		<div class="row-fluid">
 			<label class="span3"><g:message code="admin.query.owner.label"/></label>
 			<g:render contextPath="../query" template="formQueryUsers"  model="['formId':"queryResourceUserLookup"]"/>
 			<input type="hidden" name="queryResourceEid" id="queryResourceUserId" value="${params.queryResourceEid}"/>
+			<g:checkBox name="ownerCascade" value="${params.ownerCascade }"/>&nbsp;<g:message code="admin.query.cascade"/>
 		</div>
 		<div class="row-fluid">
 			<label class="span3"><g:message code="admin.query.purpose.label"/></label>
@@ -64,17 +65,17 @@
 		</div>
 		<div class="row-fluid">
 			<label class="span3"><g:message code="admin.query.status.label"/></label>
-			<div>
+			<div class="offset3">
 				<g:checkBox name="retiredCode" value="${params.retiredCode }"/>&nbsp;<g:message code="label.resource.status.retired"/>&nbsp;&nbsp;
 				<g:checkBox name="normalCode" value="${params.normalCode}"/>&nbsp;<g:message code="label.resource.status.normal"/>&nbsp;&nbsp;&nbsp;&nbsp;
 				<g:checkBox name="transferredCode" value="${params.transferredCode }"/>&nbsp;<g:message code="label.resource.status.transferred"/>
-			</div>
-			<div>
+			<br/>
+			
 				<g:checkBox name="brokenCode" value="${params.brokenCode}"/>&nbsp;<g:message code="label.resource.status.broken"/>&nbsp;&nbsp;
 				<g:checkBox name="allocatedCode" value="${params.allocatedCode }"/>&nbsp;<g:message code="label.resource.status.allocated"/>&nbsp;
 				<g:checkBox name="lostCode" value="${params.lostCode }"/>&nbsp;<g:message code="label.resource.status.lost"/>
-			</div>
-			<div class="text-center">
+			<br/>
+			
 				<g:checkBox name="returnedItioCode" value="${params.returnedItioCode }"/>&nbsp;<g:message code="label.resource.status.returned"/>
 				<g:checkBox name="inQuestionCode" value="${params.inQuestionCode }"/>&nbsp;<g:message code="label.resource.status.in_question"/>
 			</div>

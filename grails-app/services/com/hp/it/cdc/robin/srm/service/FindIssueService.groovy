@@ -57,9 +57,9 @@ class FindIssueService {
 				try{
 					log.info "Isolated Resources for user:" + it.userBusinessInfo1+"," + it.userBusinessInfo2+","+ it.userBusinessInfo3
 					new Issue(issueType:IssueTypeEnum.IsolatedResources,
-					detail: "User "+ user.userBusinessInfo1+", "
-					+ user.userBusinessInfo2+", "
-					+ user.userBusinessInfo3+" is removed, but isolated resources found under his/her name:"+isolatedResources).save()
+					detail: "User "+ it.userBusinessInfo1+", "
+					+ it.userBusinessInfo2+", "
+					+ it.userBusinessInfo3+" is removed, but isolated resources found under his/her name:"+isolatedResources).save()
 				}catch(Exception e){
 					log.error e
 				}

@@ -185,7 +185,10 @@
 					<div
 						class="fieldcontain ${hasErrors(bean: serialNr,'error')} row-fluid">
 						<label for="serials" class="span2"> <g:message
-								code="purchase.serials.label" default="Serials" />
+								code="purchase.serials.label" default="Serials" />						
+						<a href="#batchSerials" role="button" class="btn btn-mini"
+							data-toggle="modal" style="vertical-align: top;"><i
+							class="icon-list-alt"></i></a>
 
 						</label>
 						<div id="serialInput" class="span7" style="margin-left: 0px">
@@ -243,7 +246,9 @@
 		</div>
 
 		<!-- Modal -->
+		<g:render template="batchSerialsModal"></g:render>
 		<g:render template="addResourceTypeModal"></g:render>
+		
 	</div>
 </div>
 

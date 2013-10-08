@@ -32,6 +32,7 @@ import com.mongodb.gridfs.GridFSInputFile
 class AdminController {
 	transient mailService
 	transient _gridfs
+	transient birtReportService
 	static allowedMethods = [save: "POST", update: "POST", delete: "POST"]
 
 	def NotificationService notificationService
@@ -601,6 +602,25 @@ class AdminController {
 			[resources:results, pageCounts:counts, currentPage: params.pageId, totalCounts:results.totalCount, params:params]
 		}
 	}
+	
+	def serialConfig(String id){
+		log.info params
+		def resourceInstance = Resource.get(id);
+		if (!resourceInstance) {
+			return
+		}
+
+		resourceInstance.properties = params
+		if (resourceInstance.save(flush: true)) {
+			flash.actionMessage = message(code: 'flash.serialConfig.success', args: [resourceInstance.serial])
+			return
+		}
+		
+			flash.errorMessage = message(code: 'flash.serialConfig.failure', args: [resourceInstance.serial])
+			log.debug 'Unable to update AliasConfig...'
+			
+	}
+	
 	def issues(){
 		log.info params
 		session.setAttribute("tab", TabEnum.TAB_ADMIN_ISSUES)
@@ -857,6 +877,25 @@ class AdminController {
 			log.debug 'save outputStream ... '
 		}
 	}
+	
+	private def getCascadeUsersByOrganization(List<User> users){
+		def cascadeUsers = null
+		for (User user:users){
+			def tempUsers = User.findAllByManager(user)
+			if(tempUsers){
+				if(!cascadeUsers){
+					cascadeUsers = []
+				}
+				cascadeUsers.addAll(tempUsers)
+				// recursive query
+				def recurUsers = getCascadeUsersByOrganization(tempUsers)
+				if (recurUsers){
+					cascadeUsers.addAll(recurUsers)
+				}
+			}
+		}
+		return cascadeUsers
+	}
 
 	private def getQueryResources(params, eachPageCount, pageOffSet, sortProp, orderProp){
 		log.info params
@@ -864,19 +903,28 @@ class AdminController {
 		def results = query.list(max: eachPageCount, offset: pageOffSet, sort: sortProp, order: orderProp) {
 			//by serial number
 			if (params.serialNr){
-				eq('serial',params.serialNr)
+				def serials = params.serialNr.trim().split("\r\n")
+				'in'('serial', serials)
 			}
 
 			//by owner
 			if (params.queryContent != null && params.queryContent != ""){
-				def curUsers = [""]
+				def curUsers = []
+				//get current users
 				curUsers = User.createCriteria().list(){
 					if (params.queryResourceEid != null && params.queryResourceEid != ""){
-						//equal query: by owner EID
+						//equal query: by owner EID---only one user
 						eq("userBusinessInfo1", params.queryResourceEid)
 					}else{
-						//like query: by owner Name
+						//like query: by owner Name---one or more users 
 						ilike("userBusinessInfo3", "%" + params.queryContent + "%")
+					}
+				}
+				//get cascade users if cascadeOwner is 'on' 
+				if ("on".equals(params.ownerCascade) && curUsers.size() > 0){
+					def cascadeUsers = getCascadeUsersByOrganization(curUsers)
+					if (cascadeUsers){
+						curUsers.addAll(cascadeUsers)
 					}
 				}
 				'in'('currentUser', curUsers)
@@ -967,5 +1015,10 @@ class AdminController {
 			}
 		}
 		return results
+	}
+
+	def reports(){
+		session.setAttribute("tab", TabEnum.TAB_ADMIN_REPORTS)
+
 	}
 }

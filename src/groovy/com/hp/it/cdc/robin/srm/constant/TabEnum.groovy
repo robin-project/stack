@@ -8,6 +8,7 @@ enum TabEnum {
 	TAB_ADMIN_QUERY_RESOURCES(10004, "tab.query.resources.label"),
 	TAB_ADMIN_ISSUES(10005, "tab.issues.label"),
 	TAB_ADMIN_MANAGE_USERS(10006, "tab.manage.user.label"),
+	TAB_ADMIN_REPORTS(10007, "tab.reports.label"),
 	
 	TAB_USER_MY_RESOURCES(20001, "tab.my.resources.label"),
 	TAB_USER_MY_REQUESTS(20002, "tab.my.requests.label"),
