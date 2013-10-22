@@ -45,13 +45,14 @@ class AdminController {
 	def allocateResources(Integer max){
 		log.info params
 		session.setAttribute("tab", TabEnum.TAB_ADMIN_ALLOCATE_RESOURCES)
-		params.max = Math.min(max ?: 10, 100)
+//		params.max = Math.min(max ?: 10, 100)
 		def requestInstanceList = Request.where{
 			status in [
 				RequestStatusEnum.WAITING_ALLOCATED,
 				RequestStatusEnum.PARTIAL
 			]
-		}.list(sort:"id",max:params.max)
+		}.list(sort:"id")
+//		,max:params.max)
 		def locationList = Location.list()
 		[requestInstanceList: requestInstanceList, requestInstanceTotal: Request.count(),locationList:locationList]
 	}

@@ -74,9 +74,9 @@
 	</div>
 </div>
 
-		<div id="loadMore" class="pagination ajax_paginate">
+		<%--<div id="loadMore" class="pagination ajax_paginate">
 			<a href="#" onclick="loadMoreAllocate()"><g:message code="default.paginate.more"/></a>
-		</div>
+		</div>--%>
 		<div id="end">
 </div>
 

@@ -48,13 +48,13 @@
                         </ul>
                         <ul class="thumbnails">
                             <li class="span2">
-                                <avatar:gravatar email='${activity.activityUser?.userBusinessInfo2}'
+                                <avatar:gravatar email='${activity.activityUser==null?"srm.hp@hp.com":activity.activityUser.userBusinessInfo2}'
                                             size="60" cssClass="img-rounded"></avatar:gravatar>
                             </li>
                             <li class="bubble span10">
                                 <header>
                                     <span class="label label-info">
-                                        <g:set var="locationAlias" value="${com.hp.it.cdc.robin.srm.domain.Location.findByLocationCode(com.hp.it.cdc.robin.srm.domain.User.findByUserBusinessInfo3(activity.activityUser?.userBusinessInfo3).userBusinessInfo5)?.alias}"/>
+                                        <g:set var="locationAlias" value="${activity.activityUser==null?"NA":com.hp.it.cdc.robin.srm.domain.Location.findByLocationCode(com.hp.it.cdc.robin.srm.domain.User.findByUserBusinessInfo3(activity.activityUser?.userBusinessInfo3).userBusinessInfo5)?.alias}"/>
                                         ${activity.activityUser?.userBusinessInfo3}
                                         <g:if test="${locationAlias!=null}">
                                             (${locationAlias})
