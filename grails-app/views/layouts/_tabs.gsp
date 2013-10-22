@@ -26,13 +26,18 @@
 							<g:message code="tab.query.resources.label"
 								default="Query resources" />
 						</g:remoteLink></li>
+					<%-- <li id="TAB-10002"><g:remoteLink action="returnResources"
 					<li id="TAB-10005"><g:remoteLink action="issues"
 							update="SRM-BODY-CONTENT" after="toggleToTab('TAB-10005')"><i class="icon-check"></i>&nbsp;
 							<g:message code="tab.issues.label" default="Issues" />
-						</g:remoteLink></li>
+						</g:remoteLink></li>--%>
 					<li id="TAB-10006"><g:remoteLink action="manageUsers"
 							update="SRM-BODY-CONTENT" after="toggleToTab('TAB-10006')"><i class="icon-user"></i>&nbsp;
 							<g:message code="tab.manage.user.label" default="Manager users" />
+						</g:remoteLink></li>
+					<li id="TAB-10007"><g:remoteLink action="reports"
+							update="SRM-BODY-CONTENT" after="toggleToTab('TAB-10007')"><i class="icon-fire"></i>&nbsp;
+							<g:message code="tab.reports.label" default="Reports" />
 						</g:remoteLink></li>
 					<g:link controller="common" action="index"  class="btn pull-right">
 						<i class="icon-hand-left"></i>&nbsp;<g:message code="myresources.label" default="My resources" />
