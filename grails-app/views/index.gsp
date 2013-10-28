@@ -100,7 +100,7 @@ background-color: #f5f5f5;
 			</DIV>
 		</browser:otherwise>
 	</browser:choice>
-	<a href="https://github.com/robin-hp/stack" target="_blank"><img src="${resource(dir: 'images', file: 'forkus_github.png')}" class="pull-right"/></a>
+	<a href="https://github.com/robin-project/stack" target="_blank"><img src="${resource(dir: 'images', file: 'forkus_github.png')}" class="pull-right"/></a>
 	<div id="body" class="container">
 		<div id="spacer-top" class="spacer row-fluid"></div>
 		<div id="login" class="row-fluid">
